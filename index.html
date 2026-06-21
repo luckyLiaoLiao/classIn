@@ -1,0 +1,2869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClassIn 智能错题本</title>
+<style>
+/* ========== 设计 Token ========== */
+:root {
+  /* 主色 */
+  --color-primary:        #3B7DED;
+  --color-primary-hover:  #2B6AD9;
+  --color-primary-active: #1F5AC6;
+  --color-primary-bg:     #EBF2FE;
+  --color-primary-border: #A3C4F3;
+
+  /* 辅助色 */
+  --color-secondary:        #6366F1;
+  --color-secondary-hover:  #5558E3;
+  --color-secondary-bg:     #EEEFFE;
+
+  /* 状态色 — 成功 */
+  --color-success:        #16A34A;
+  --color-success-hover:  #15803D;
+  --color-success-bg:     #ECFDF5;
+  --color-success-border: #86EFAC;
+
+  /* 状态色 — 警告 */
+  --color-warning:        #E5900B;
+  --color-warning-hover:  #CA8A04;
+  --color-warning-bg:     #FFFBEB;
+  --color-warning-border: #FDE68A;
+
+  /* 状态色 — 危险 */
+  --color-danger:         #DC2626;
+  --color-danger-hover:   #B91C1C;
+  --color-danger-bg:      #FEF2F2;
+  --color-danger-border:  #FCA5A5;
+
+  /* 中性色阶 */
+  --color-bg-page:        #F5F6FA;
+  --color-bg-card:        #FFFFFF;
+  --color-bg-hover:       #F0F1F5;
+  --color-bg-active:      #E8E9EF;
+  --color-bg-disabled:    #F3F4F6;
+  --color-border:         #E2E4EB;
+  --color-border-light:   #EDEEF3;
+  --color-text-primary:   #1A1D26;
+  --color-text-secondary: #5A5F72;
+  --color-text-muted:     #9498A8;
+  --color-text-disabled:  #BFC2CC;
+  --color-text-inverse:   #FFFFFF;
+
+  /* 字体 */
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue",
+                 Helvetica, Arial, sans-serif;
+  --font-size-xs:   12px;
+  --font-size-sm:   13px;
+  --font-size-base: 14px;
+  --font-size-md:   16px;
+  --font-size-lg:   18px;
+  --font-size-xl:   20px;
+  --font-size-2xl:  24px;
+  --font-size-3xl:  30px;
+  --line-height-tight:  1.35;
+  --line-height-normal: 1.5;
+  --line-height-loose:  1.7;
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  /* 间距阶梯 */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* 圆角阶梯 */
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
+  --radius-xl:   12px;
+  --radius-full: 9999px;
+
+  /* 阴影阶梯 */
+  --shadow-sm:  0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md:  0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg:  0 4px 16px rgba(0,0,0,0.10);
+  --shadow-xl:  0 8px 24px rgba(0,0,0,0.12);
+
+  /* 其他 */
+  --header-height: 56px;
+  --sidebar-width: 200px;
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+}
+
+/* ========== 全局重置 ========== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  background: var(--color-bg-page);
+  min-height: 100vh;
+}
+
+/* ========== 顶部导航栏 ========== */
+.header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--header-height);
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-6);
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  margin-right: var(--space-8);
+  cursor: default;
+  user-select: none;
+}
+
+.header-brand .brand-icon {
+  width: 28px; height: 28px;
+  background: var(--color-primary);
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-inverse);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.header-nav-back {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+  margin-right: var(--space-6);
+}
+.header-nav-back:hover { background: var(--color-bg-hover); }
+
+.header-role-tabs {
+  display: flex;
+  gap: var(--space-1);
+  background: var(--color-bg-page);
+  border-radius: var(--radius-md);
+  padding: 3px;
+}
+
+.header-role-tab {
+  padding: var(--space-1) var(--space-5);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: none;
+  background: none;
+  user-select: none;
+}
+.header-role-tab:hover {
+  color: var(--color-text-primary);
+}
+.header-role-tab.active {
+  background: var(--color-bg-card);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.header-class-info {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.header-date {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-bg-page);
+  border-radius: var(--radius-sm);
+}
+
+/* ========== 主内容区 ========== */
+.main-container {
+  margin-top: var(--header-height);
+  min-height: calc(100vh - var(--header-height));
+}
+
+.role-panel { display: none; }
+.role-panel.active { display: block; }
+
+/* ========== 占位提示（后续轮次替换） ========== */
+.placeholder-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-md);
+  gap: var(--space-4);
+}
+.placeholder-page .placeholder-icon {
+  font-size: 48px;
+  opacity: 0.3;
+}
+
+/* ========== Toast 全局样式 ========== */
+.toast-container {
+  position: fixed;
+  top: calc(var(--header-height) + var(--space-4));
+  right: var(--space-6);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.toast {
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-inverse);
+  background: var(--color-text-primary);
+  box-shadow: var(--shadow-lg);
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.2s forwards;
+  max-width: 320px;
+}
+.toast.success { background: var(--color-success); }
+.toast.warning { background: var(--color-warning); }
+.toast.danger  { background: var(--color-danger); }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(40px); }
+}
+
+/* ========== 学生端二级导航 ========== */
+.stu-nav {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border-light);
+}
+.stu-nav-item {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: all var(--transition-fast);
+}
+.stu-nav-item:hover { color: var(--color-text-primary); background: var(--color-bg-hover); }
+.stu-nav-item.active {
+  color: var(--color-primary);
+  background: var(--color-primary-bg);
+}
+
+.stu-page { display: none; padding: var(--space-6); }
+.stu-page.active { display: block; }
+
+/* ========== 学生端 — 学习概览 ========== */
+.stu-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.stat-card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-light);
+}
+.stat-card-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+.stat-card-value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+.stat-card-value.primary { color: var(--color-primary); }
+.stat-card-value.danger  { color: var(--color-danger); }
+.stat-card-value.success { color: var(--color-success); }
+.stat-card-value.warning { color: var(--color-warning); }
+.stat-card-sub {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+.stu-overview-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.panel-card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-light);
+  overflow: hidden;
+}
+.panel-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border-light);
+}
+.panel-card-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+.panel-card-body { padding: var(--space-4) var(--space-5); }
+
+.review-task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+.review-task-item:last-child { border-bottom: none; }
+.review-task-left { display: flex; align-items: center; gap: var(--space-3); }
+.review-task-subject {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--font-size-sm);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+.review-task-kp {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.exam-bar-track {
+  height: 8px;
+  background: var(--color-bg-page);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.exam-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  transition: width var(--transition-normal);
+}
+.exam-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.cta-banner {
+  margin-top: var(--space-6);
+  background: var(--color-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-md);
+}
+.cta-banner-text {
+  color: var(--color-text-inverse);
+}
+.cta-banner-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-1);
+}
+.cta-banner-sub {
+  font-size: var(--font-size-sm);
+  opacity: 0.85;
+}
+.cta-btn {
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-bg-card);
+  color: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: box-shadow var(--transition-fast);
+  white-space: nowrap;
+}
+.cta-btn:hover { box-shadow: var(--shadow-lg); }
+
+/* ========== 学生端 — 错题本列表 ========== */
+.filter-bar {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+.filter-select {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast);
+  font-family: var(--font-family);
+}
+.filter-select:focus { border-color: var(--color-primary); }
+
+.question-list { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.q-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast);
+}
+.q-card:hover { box-shadow: var(--shadow-md); }
+
+.q-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+.q-card-stem {
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-normal);
+  flex: 1;
+  white-space: pre-line;
+}
+.q-card-mastery {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.mastery-未掌握 { background: var(--color-danger-bg); color: var(--color-danger); }
+.mastery-巩固中 { background: var(--color-warning-bg); color: var(--color-warning); }
+.mastery-已掌握 { background: var(--color-success-bg); color: var(--color-success); }
+
+.q-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+.q-meta-tag {
+  font-size: var(--font-size-xs);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-page);
+  color: var(--color-text-secondary);
+}
+.q-meta-tag.error-tag {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+.q-meta-tag.source-tag {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+.q-card-answers {
+  display: flex;
+  gap: var(--space-6);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-3);
+}
+.q-answer-item { display: flex; gap: var(--space-2); }
+.q-answer-label { color: var(--color-text-muted); }
+.q-answer-val.wrong { color: var(--color-danger); font-weight: var(--font-weight-medium); }
+.q-answer-val.correct { color: var(--color-success); font-weight: var(--font-weight-medium); }
+
+.q-card-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+.btn-sm {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+}
+.btn-sm:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.btn-sm.primary {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border-color: var(--color-primary);
+}
+.btn-sm.primary:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.empty-hint {
+  text-align: center;
+  padding: var(--space-12) 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.filter-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+/* ========== 学生端 — 错题详情页 ========== */
+.detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+  transition: background var(--transition-fast);
+}
+.detail-back:hover { background: var(--color-bg-hover); }
+
+.detail-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-4);
+  overflow: hidden;
+}
+.detail-section {
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--color-border-light);
+}
+.detail-section:last-child { border-bottom: none; }
+.detail-section-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.detail-section-title .ai-badge {
+  font-size: var(--font-size-xs);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-secondary-bg);
+  color: var(--color-secondary);
+  font-weight: var(--font-weight-medium);
+}
+.detail-stem {
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-loose);
+  color: var(--color-text-primary);
+  white-space: pre-line;
+}
+
+.detail-answer-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+.detail-answer-box {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+}
+.detail-answer-box.wrong-box {
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+}
+.detail-answer-box.correct-box {
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+}
+.detail-answer-box-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+}
+.detail-answer-box-val {
+  font-weight: var(--font-weight-semibold);
+}
+.detail-answer-box.wrong-box .detail-answer-box-val { color: var(--color-danger); }
+.detail-answer-box.correct-box .detail-answer-box-val { color: var(--color-success); }
+
+.detail-ai-text {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-loose);
+  color: var(--color-text-primary);
+}
+
+.detail-tip-box {
+  padding: var(--space-4);
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+}
+
+.detail-actions {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+.btn-md {
+  padding: var(--space-2) var(--space-5);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: all var(--transition-fast);
+}
+.btn-md:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.btn-md.primary {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border-color: var(--color-primary);
+}
+.btn-md.primary:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+/* ========== 学生端 — 再练页 ========== */
+.practice-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+.practice-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+.practice-origin {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.practice-item {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+.practice-item-num {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  background: var(--color-primary-bg);
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+}
+.practice-item-stem {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-loose);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-4);
+  white-space: pre-line;
+}
+
+.practice-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.practice-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-fast);
+}
+.practice-option:hover { border-color: var(--color-primary-border); background: var(--color-primary-bg); }
+.practice-option.selected { border-color: var(--color-primary); background: var(--color-primary-bg); }
+.practice-option.correct-result { border-color: var(--color-success); background: var(--color-success-bg); }
+.practice-option.wrong-result { border-color: var(--color-danger); background: var(--color-danger-bg); }
+.practice-option.disabled { pointer-events: none; }
+.practice-option-radio {
+  width: 16px; height: 16px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+}
+.practice-option.selected .practice-option-radio {
+  border-color: var(--color-primary);
+}
+.practice-option.selected .practice-option-radio::after {
+  content: '';
+  width: 8px; height: 8px;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+.practice-option.correct-result .practice-option-radio {
+  border-color: var(--color-success);
+}
+.practice-option.correct-result .practice-option-radio::after {
+  content: '';
+  width: 8px; height: 8px;
+  background: var(--color-success);
+  border-radius: var(--radius-full);
+}
+.practice-option.wrong-result .practice-option-radio {
+  border-color: var(--color-danger);
+}
+.practice-option.wrong-result .practice-option-radio::after {
+  content: '';
+  width: 8px; height: 8px;
+  background: var(--color-danger);
+  border-radius: var(--radius-full);
+}
+
+.practice-fill-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+.practice-fill-input:focus { border-color: var(--color-primary); }
+.practice-fill-input.correct-result { border-color: var(--color-success); background: var(--color-success-bg); }
+.practice-fill-input.wrong-result { border-color: var(--color-danger); background: var(--color-danger-bg); }
+.practice-fill-input:disabled { background: var(--color-bg-disabled); color: var(--color-text-primary); }
+
+.practice-feedback {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  display: none;
+}
+.practice-feedback.correct { background: var(--color-success-bg); border: 1px solid var(--color-success-border); color: var(--color-success); }
+.practice-feedback.wrong { background: var(--color-danger-bg); border: 1px solid var(--color-danger-border); color: var(--color-text-primary); }
+.practice-feedback.visible { display: block; }
+
+.practice-submit-bar {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-4) 0;
+}
+
+.practice-result-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+  display: none;
+  margin-top: var(--space-4);
+}
+.practice-result-card.visible { display: block; }
+.practice-result-score {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  margin-bottom: var(--space-2);
+}
+.practice-result-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+}
+.practice-result-badges {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.practice-badge {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+.practice-badge.success { background: var(--color-success-bg); color: var(--color-success); }
+.practice-badge.primary { background: var(--color-primary-bg); color: var(--color-primary); }
+.practice-badge.warning { background: var(--color-warning-bg); color: var(--color-warning); }
+
+/* ========== 老师端二级导航（复用学生端结构） ========== */
+.tch-nav { display: flex; gap: var(--space-1); padding: var(--space-3) var(--space-6); background: var(--color-bg-card); border-bottom: 1px solid var(--color-border-light); }
+.tch-nav-item { padding: var(--space-2) var(--space-4); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-secondary); border-radius: var(--radius-sm); cursor: pointer; border: none; background: none; transition: all var(--transition-fast); }
+.tch-nav-item:hover { color: var(--color-text-primary); background: var(--color-bg-hover); }
+.tch-nav-item.active { color: var(--color-primary); background: var(--color-primary-bg); }
+.tch-page { display: none; padding: var(--space-6); }
+.tch-page.active { display: block; }
+
+/* ========== 老师端 — 学情概览 ========== */
+.tch-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.tch-body-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.tch-chart-container {
+  position: relative;
+  padding: var(--space-4) var(--space-5);
+}
+.tch-chart-svg { width: 100%; height: 180px; }
+.tch-chart-line { fill: none; stroke: var(--color-primary); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tch-chart-dot { fill: var(--color-primary); }
+.tch-chart-grid { stroke: var(--color-border-light); stroke-width: 1; }
+.tch-chart-label { font-size: var(--font-size-xs); fill: var(--color-text-muted); }
+.tch-chart-val { font-size: var(--font-size-xs); fill: var(--color-text-secondary); font-weight: var(--font-weight-medium); }
+
+.focus-student-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+.focus-student-row:last-child { border-bottom: none; }
+.focus-avatar {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  flex-shrink: 0;
+}
+.focus-info { flex: 1; min-width: 0; }
+.focus-name { font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); }
+.focus-detail { font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px; }
+.trend-tag {
+  font-size: var(--font-size-xs);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-medium);
+}
+.trend-up   { background: var(--color-success-bg); color: var(--color-success); }
+.trend-down { background: var(--color-danger-bg); color: var(--color-danger); }
+.trend-flat { background: var(--color-warning-bg); color: var(--color-warning); }
+
+.weak-point-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+.weak-point-row:last-child { border-bottom: none; }
+.weak-rank {
+  width: 24px; height: 24px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.weak-rank.top { background: var(--color-danger-bg); color: var(--color-danger); }
+.weak-rank.normal { background: var(--color-bg-page); color: var(--color-text-muted); }
+.weak-info { flex: 1; }
+.weak-name { font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); }
+.weak-sub { font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px; }
+.weak-bar-track {
+  width: 80px; height: 6px;
+  background: var(--color-bg-page);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.weak-bar-fill { height: 100%; border-radius: var(--radius-full); background: var(--color-danger); }
+
+.tch-action-list { list-style: none; }
+.tch-action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+}
+.tch-action-item:last-child { border-bottom: none; }
+.tch-action-bullet {
+  width: 20px; height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ========== 老师端 — 共性错题面板 ========== */
+.common-error-group {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-4);
+  overflow: hidden;
+}
+.common-error-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-bg-page);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.common-error-group-header:hover { background: var(--color-bg-hover); }
+.common-error-group-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  display: flex; align-items: center; gap: var(--space-2);
+}
+.common-error-group-badge {
+  font-size: var(--font-size-xs);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-weight: var(--font-weight-medium);
+}
+.common-error-group-body { display: none; }
+.common-error-group.open .common-error-group-body { display: block; }
+.common-error-group-arrow {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  transition: transform var(--transition-fast);
+}
+.common-error-group.open .common-error-group-arrow { transform: rotate(90deg); }
+
+.common-q-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border-light);
+}
+.common-q-row:last-child { border-bottom: none; }
+.common-q-info { flex: 1; min-width: 0; }
+.common-q-stem {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+  white-space: pre-line;
+}
+.common-q-stats {
+  display: flex;
+  gap: var(--space-4);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+.common-q-typical {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+.common-q-actions { flex-shrink: 0; display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-end; }
+
+.ai-review-box {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-secondary-bg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  display: none;
+}
+.ai-review-box.visible { display: block; }
+.ai-review-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-secondary);
+  margin-bottom: var(--space-1);
+}
+
+.review-order-tag {
+  font-size: var(--font-size-xs);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-secondary-bg);
+  color: var(--color-secondary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ========== 老师端 — 讲评与再练发布 ========== */
+.publish-section {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-4);
+  overflow: hidden;
+}
+.publish-section-header {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+.publish-q-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--color-border-light);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.publish-q-check:hover { background: var(--color-bg-hover); }
+.publish-q-check:last-child { border-bottom: none; }
+.publish-checkbox {
+  width: 18px; height: 18px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+}
+.publish-q-check.checked .publish-checkbox {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.publish-q-check.checked .publish-checkbox::after {
+  content: '';
+  width: 10px; height: 6px;
+  border-left: 2px solid var(--color-text-inverse);
+  border-bottom: 2px solid var(--color-text-inverse);
+  transform: rotate(-45deg);
+  margin-top: -2px;
+}
+.publish-q-label { font-size: var(--font-size-sm); color: var(--color-text-primary); flex: 1; }
+.publish-q-rate { font-size: var(--font-size-xs); color: var(--color-danger); }
+
+.publish-target-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+}
+.publish-target-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.publish-target-options { display: flex; gap: var(--space-2); }
+.publish-target-opt {
+  padding: var(--space-1) var(--space-4);
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-card);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
+}
+.publish-target-opt.active {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border-color: var(--color-primary);
+}
+
+.publish-actions {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.publish-outline {
+  padding: var(--space-4) var(--space-5);
+  display: none;
+}
+.publish-outline.visible { display: block; }
+.publish-outline-content {
+  background: var(--color-bg-page);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-loose);
+  color: var(--color-text-primary);
+  white-space: pre-line;
+}
+
+/* ========== 模态框（发布成功） ========== */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.visible { display: flex; }
+.modal-box {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8) var(--space-10);
+  box-shadow: var(--shadow-xl);
+  text-align: center;
+  max-width: 400px;
+}
+.modal-icon {
+  width: 48px; height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--font-size-xl);
+  margin: 0 auto var(--space-4);
+}
+.modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-2);
+}
+.modal-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-6);
+  line-height: var(--line-height-normal);
+}
+.modal-close-btn {
+  padding: var(--space-2) var(--space-8);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: background var(--transition-fast);
+}
+.modal-close-btn:hover { background: var(--color-primary-hover); }
+</style>
+</head>
+<body>
+
+<!-- ===== 顶部导航栏 ===== -->
+<header class="header">
+  <div class="header-brand">
+    <span class="brand-icon">C</span>
+    智能错题本
+  </div>
+  <span class="header-nav-back" onclick="showToast('返回课程工作台（Demo 演示入口）')">← 课程工作台</span>
+  <div class="header-role-tabs">
+    <button class="header-role-tab active" data-role="student" onclick="switchRole('student')">学生端</button>
+    <button class="header-role-tab" data-role="teacher" onclick="switchRole('teacher')">老师端</button>
+  </div>
+  <div class="header-right">
+    <select class="filter-select" id="headerClassSelect" onchange="switchHeaderClass(this.value)">
+      <option value="c01">七年级2班</option>
+      <option value="c02">七年级1班</option>
+      <option value="c03">七年级3班</option>
+      <option value="c04">八年级1班</option>
+    </select>
+    <select class="filter-select" id="headerSubjectSelect" onchange="switchHeaderSubject(this.value)" style="margin-left:var(--space-1);">
+      <option value="">全部科目</option>
+      <option value="math">数学</option>
+      <option value="english">英语</option>
+    </select>
+    <span class="header-date" id="headerDate"></span>
+  </div>
+</header>
+
+<!-- ===== 主内容区 ===== -->
+<div class="main-container">
+  <!-- 学生端 -->
+  <div class="role-panel active" id="studentPanel">
+    <!-- 二级导航 -->
+    <nav class="stu-nav">
+      <button class="stu-nav-item active" data-page="stuOverview" onclick="switchStuPage('stuOverview')">学习概览</button>
+      <button class="stu-nav-item" data-page="stuMistakes" onclick="switchStuPage('stuMistakes')">学习错题库</button>
+      <button class="stu-nav-item" data-page="stuDetail" onclick="switchStuPage('stuDetail')" id="navDetail" style="display:none;">错题详情</button>
+      <button class="stu-nav-item" data-page="stuPractice" onclick="switchStuPage('stuPractice')" id="navPractice" style="display:none;">再练</button>
+    </nav>
+
+    <!-- 页面：学习概览 -->
+    <div class="stu-page active" id="stuOverview">
+      <div class="stu-overview-grid">
+        <div class="stat-card">
+          <div class="stat-card-label">本周新增错题</div>
+          <div class="stat-card-value danger" id="statNew">4</div>
+          <div class="stat-card-sub">较上周 +1</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">待复习错题</div>
+          <div class="stat-card-value warning" id="statPending">6</div>
+          <div class="stat-card-sub">建议今日完成 3 道</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">已掌握</div>
+          <div class="stat-card-value success" id="statMastered">2</div>
+          <div class="stat-card-sub">累计已掌握题目</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">连续复习</div>
+          <div class="stat-card-value primary" id="statStreak">3 天</div>
+          <div class="stat-card-sub">继续保持！</div>
+        </div>
+      </div>
+
+      <div class="stu-overview-body">
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <span class="panel-card-title">今日推荐复习</span>
+            <span style="font-size:var(--font-size-xs);color:var(--color-text-muted);" id="reviewTaskCount"></span>
+          </div>
+          <div class="panel-card-body" id="reviewTaskList"></div>
+        </div>
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <span class="panel-card-title">最近一次测验</span>
+            <span style="font-size:var(--font-size-xs);color:var(--color-text-muted);" id="lastExamName"></span>
+          </div>
+          <div class="panel-card-body">
+            <div style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-bottom:var(--space-2);">
+              正确率 <strong id="lastExamAcc" style="color:var(--color-primary);font-size:var(--font-size-lg);"></strong>
+            </div>
+            <div class="exam-bar-track">
+              <div class="exam-bar-fill" id="lastExamBar" style="width:0%"></div>
+            </div>
+            <div class="exam-bar-labels">
+              <span id="lastExamCorrectLabel"></span>
+              <span id="lastExamTotalLabel"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-banner">
+        <div class="cta-banner-text">
+          <div class="cta-banner-title">开始今日再练</div>
+          <div class="cta-banner-sub" id="ctaSub">系统已为你准备了 3 道针对薄弱知识点的练习题</div>
+          <div class="cta-banner-sub" id="ctaLogic" style="opacity:0.7;margin-top:var(--space-1);"></div>
+        </div>
+        <button class="cta-btn" onclick="viewDetail(STUDENT_STATS.todayReviewTasks[0].questionId)">立即开始</button>
+      </div>
+      <div style="margin-top:var(--space-3);font-size:var(--font-size-xs);color:var(--color-text-muted);text-align:right;" id="overviewDataSource"></div>
+    </div>
+
+    <!-- 页面：错题本列表 -->
+    <div class="stu-page" id="stuMistakes">
+      <div class="filter-bar">
+        <select class="filter-select" id="filterSubject" onchange="renderQuestionList()">
+          <option value="">全部科目</option>
+          <option value="math">数学</option>
+          <option value="english">英语</option>
+        </select>
+        <select class="filter-select" id="filterKP" onchange="renderQuestionList()">
+          <option value="">全部知识点</option>
+        </select>
+        <select class="filter-select" id="filterMastery" onchange="renderQuestionList()">
+          <option value="">全部状态</option>
+          <option value="未掌握">未掌握</option>
+          <option value="巩固中">巩固中</option>
+          <option value="已掌握">已掌握</option>
+        </select>
+        <select class="filter-select" id="filterSource" onchange="renderQuestionList()">
+          <option value="">全部来源</option>
+        </select>
+        <select class="filter-select" id="filterErrorTag" onchange="renderQuestionList()">
+          <option value="">全部错因</option>
+          <option value="概念不清">概念不清</option>
+          <option value="计算失误">计算失误</option>
+          <option value="审题错误">审题错误</option>
+          <option value="知识点混淆">知识点混淆</option>
+          <option value="表达不完整">表达不完整</option>
+        </select>
+        <select class="filter-select" id="filterMarked" onchange="renderQuestionList()">
+          <option value="">全部标记</option>
+          <option value="marked">老师重点标记</option>
+          <option value="common">班级共性错题</option>
+        </select>
+      </div>
+      <div class="filter-count" id="filterCount"></div>
+      <div class="question-list" id="questionList"></div>
+    </div>
+
+    <!-- 页面：错题详情 -->
+    <div class="stu-page" id="stuDetail">
+      <div class="detail-back" onclick="switchStuPage('stuMistakes')">← 返回错题本</div>
+      <div id="detailContent"></div>
+    </div>
+
+    <!-- 页面：再练 -->
+    <div class="stu-page" id="stuPractice">
+      <div class="detail-back" onclick="switchStuPage('stuDetail')">← 返回错题详情</div>
+      <div id="practiceContent"></div>
+    </div>
+  </div>
+
+  <!-- 老师端 -->
+  <div class="role-panel" id="teacherPanel">
+    <nav class="tch-nav">
+      <button class="tch-nav-item active" data-page="tchOverview" onclick="switchTchPage('tchOverview')">班级学情概览</button>
+      <button class="tch-nav-item" data-page="tchCommon" onclick="switchTchPage('tchCommon')">共性错题</button>
+      <button class="tch-nav-item" data-page="tchPublish" onclick="switchTchPage('tchPublish')">讲评与再练发布</button>
+    </nav>
+
+    <!-- 页面：班级学情概览 -->
+    <div class="tch-page active" id="tchOverview">
+      <div class="tch-overview-grid" id="tchStatCards"></div>
+      <div class="tch-body-row">
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <span class="panel-card-title">正确率趋势</span>
+            <span style="font-size:var(--font-size-xs);color:var(--color-text-muted);">最近 4 次作业/测验</span>
+          </div>
+          <div class="tch-chart-container" id="tchChart"></div>
+        </div>
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <span class="panel-card-title" id="tchWeakTitle">薄弱知识点 Top 5</span>
+            <div style="display:flex;gap:var(--space-1);">
+              <button class="btn-sm" style="font-size:var(--font-size-xs);" id="weakByKP" onclick="switchWeakView('kp')">按知识点</button>
+              <button class="btn-sm" style="font-size:var(--font-size-xs);" id="weakByErr" onclick="switchWeakView('error')">按错因</button>
+            </div>
+          </div>
+          <div class="panel-card-body" id="tchWeakList"></div>
+        </div>
+      </div>
+      <div class="tch-body-row">
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <span class="panel-card-title">需要重点关注的学生</span>
+          </div>
+          <div class="panel-card-body" id="tchFocusList"></div>
+        </div>
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <span class="panel-card-title">建议下一步动作</span>
+            <span class="detail-section-title" style="margin-bottom:0"><span class="ai-badge">智能推荐</span></span>
+          </div>
+          <div class="panel-card-body" id="tchActionList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 页面：共性错题面板 -->
+    <div class="tch-page" id="tchCommon">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5);">
+        <div style="font-size:var(--font-size-lg);font-weight:var(--font-weight-semibold);">共性错题面板</div>
+        <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);">按知识点聚合 · 按薄弱程度排序</div>
+      </div>
+      <div id="tchCommonList"></div>
+    </div>
+
+    <!-- 页面：讲评与再练发布 -->
+    <div class="tch-page" id="tchPublish">
+      <div style="margin-bottom:var(--space-5);">
+        <div style="font-size:var(--font-size-lg);font-weight:var(--font-weight-semibold);">讲评与再练发布</div>
+        <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1);">将共性错题转化为课堂讲评与针对性再练任务，学生完成后自动回流至学情面板</div>
+      </div>
+
+      <div class="publish-section">
+        <div class="publish-section-header">选择共性错题</div>
+        <div id="publishCheckList"></div>
+      </div>
+
+      <div class="publish-section">
+        <div class="publish-section-header">发布范围</div>
+        <div class="publish-target-bar">
+          <span class="publish-target-label">发布给</span>
+          <div class="publish-target-options" id="publishTargets">
+            <button class="publish-target-opt active" data-target="all" onclick="selectPublishTarget('all')">全班</button>
+            <button class="publish-target-opt" data-target="part" onclick="selectPublishTarget('part')">部分学生</button>
+          </div>
+        </div>
+        <div id="publishStudentPicker" style="display:none;padding:0 var(--space-5) var(--space-4);"></div>
+      </div>
+
+      <div class="publish-section">
+        <div class="publish-section-header">发布预览</div>
+        <div id="publishPreview" style="padding:var(--space-3) var(--space-5);font-size:var(--font-size-sm);color:var(--color-text-secondary);"></div>
+      </div>
+
+      <div class="publish-section">
+        <div class="publish-section-header">讲评提纲</div>
+        <div class="publish-outline" id="publishOutline"></div>
+        <div class="publish-actions">
+          <button class="btn-md" onclick="generateOutline()">生成讲评提纲</button>
+          <button class="btn-md primary" onclick="publishPractice()">布置针对性再练</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 发布成功模态框 -->
+  <div class="modal-overlay" id="publishModal">
+    <div class="modal-box">
+      <div class="modal-icon">✓</div>
+      <div class="modal-title" id="modalTitle">发布成功</div>
+      <div class="modal-desc" id="modalDesc"></div>
+      <button class="modal-close-btn" onclick="closeModal()">知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toast 容器 ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ================================================================
+   Mock 数据
+   ================================================================ */
+
+// ---- 班级 & 学生 ----
+const CLASS_INFO = { id: 'c01', name: '七年级2班', grade: '七年级', totalStudents: 42 };
+
+const STUDENTS = [
+  { id: 's01', name: '张小明', avatar: '张' },
+  { id: 's02', name: '李思雨', avatar: '李' },
+  { id: 's03', name: '王浩然', avatar: '王' },
+  { id: 's04', name: '陈思琪', avatar: '陈' },
+  { id: 's05', name: '刘子轩', avatar: '刘' },
+];
+
+// ---- 科目 ----
+const SUBJECTS = [
+  { id: 'math', name: '数学', icon: '📐' },
+  { id: 'english', name: '英语', icon: '📝' },
+];
+
+// ---- 测验 & 作业来源 ----
+const SOURCES = [
+  { id: 'exam01',     type: '测验', name: '第三章单元测验',       subject: 'math',    date: '2026-06-13', lesson: '第12课 分数的四则运算', hasReview: true,  reviewClip: '录播回放 32:15-38:40' },
+  { id: 'exam02',     type: '测验', name: '一般过去时专项测验',   subject: 'english', date: '2026-06-16', lesson: '第8课 一般过去时',      hasReview: false, reviewClip: null },
+  { id: 'homework01', type: '作业', name: '分数运算课后作业',     subject: 'math',    date: '2026-06-10', lesson: '第11课 分数加减法',      hasReview: true,  reviewClip: '讲解摘要已生成' },
+  { id: 'homework02', type: '作业', name: '完形填空练习 Week12',  subject: 'english', date: '2026-06-17', lesson: '第9课 阅读与完形',      hasReview: false, reviewClip: null },
+];
+
+// ---- 知识点 ----
+const KNOWLEDGE_POINTS = {
+  math: ['分数加减法', '分数乘除法', '一元一次方程', '角度计算', '有理数运算'],
+  english: ['一般过去时', '现在完成时', '介词搭配', '完形填空', '词义辨析'],
+};
+
+// ---- 错题库（当前登录学生 = 张小明 s01 视角） ----
+const WRONG_QUESTIONS = [
+  {
+    id: 'q01',
+    subject: 'math',
+    knowledgePoint: '分数加减法',
+    sourceId: 'homework01',
+    stem: '计算：2/3 + 3/4 = ?',
+    myAnswer: '5/7',
+    correctAnswer: '17/12',
+    errorTag: '概念不清',
+    analysis: '分数加法需要先通分，找到公分母 12，将 2/3 化为 8/12，3/4 化为 9/12，相加得 17/12。不能直接将分子分母分别相加。',
+    aiExplanation: '你把分子和分母分别相加了（2+3=5, 3+4=7），这是一个常见的概念性错误。分数加法的核心规则是"通分后再加"：找最小公分母 → 化成同分母分数 → 分子相加。记住：只有分母相同的分数才能直接加减分子。',
+    similarTip: '试试其他需要通分的分数加减题，巩固"先通分、再运算"的步骤。',
+    masteryStatus: '未掌握',
+    studentId: 's01',
+    date: '2026-06-10',
+    lastReviewDate: null,
+    frequency: 2,
+  },
+  {
+    id: 'q02',
+    subject: 'math',
+    knowledgePoint: '分数乘除法',
+    sourceId: 'homework01',
+    stem: '计算：5/6 ÷ 2/3 = ?',
+    myAnswer: '10/18',
+    correctAnswer: '5/4',
+    errorTag: '计算失误',
+    analysis: '分数除法转化为乘以倒数：5/6 × 3/2 = 15/12 = 5/4。你虽然做了交叉相乘但没有化简。',
+    aiExplanation: '你的计算过程中把 5/6 ÷ 2/3 变成了 5×2 / 6×3 = 10/18，这说明你把除法当成了"分子分母分别相乘"。正确方法是"除以一个分数 = 乘以它的倒数"，即 5/6 × 3/2 = 15/12 = 5/4。下次遇到分数除法，第一步永远是把除号变乘号、把除数倒过来。',
+    similarTip: '再练几道分数除法题，强化"除变乘、倒过来"的操作习惯。',
+    masteryStatus: '巩固中',
+    studentId: 's01',
+    date: '2026-06-10',
+    lastReviewDate: '2026-06-18',
+    frequency: 1,
+  },
+  {
+    id: 'q03',
+    subject: 'math',
+    knowledgePoint: '一元一次方程',
+    sourceId: 'exam01',
+    stem: '解方程：3x - 7 = 2x + 5',
+    myAnswer: 'x = -12',
+    correctAnswer: 'x = 12',
+    errorTag: '计算失误',
+    analysis: '移项得 3x - 2x = 5 + 7，即 x = 12。移项时符号需要变号，5 移到左边变 -5 是错误的，7 移到右边应为 +7。',
+    aiExplanation: '你在移项时把 +7 移到右边后仍然写成了 -7，导致算出 x = 5-7 = -12。移项规则是"移过等号、变换符号"：左边的 -7 移到右边变成 +7。建议你移项之后先检查一遍符号再做下一步计算。',
+    similarTip: '尝试几道含移项的一元一次方程，重点关注移项后的符号变化。',
+    masteryStatus: '未掌握',
+    studentId: 's01',
+    date: '2026-06-13',
+    lastReviewDate: null,
+    frequency: 2,
+  },
+  {
+    id: 'q04',
+    subject: 'math',
+    knowledgePoint: '角度计算',
+    sourceId: 'exam01',
+    stem: '如图，直线 AB 与 CD 相交于点 O，∠AOC = 65°，求 ∠BOD 的度数。',
+    myAnswer: '115°',
+    correctAnswer: '65°',
+    errorTag: '概念不清',
+    analysis: '∠AOC 与 ∠BOD 是对顶角，对顶角相等，所以 ∠BOD = 65°。你求的是 ∠AOC 的补角（邻补角），而不是对顶角。',
+    aiExplanation: '你算出了 180° - 65° = 115°，这其实是 ∠BOC 或 ∠AOD（邻补角）的度数。题目问的是 ∠BOD，它和 ∠AOC 是对顶角——两条直线相交形成的对角，永远相等。区分"对顶角"和"邻补角"是关键：对顶角相等，邻补角互补（和为 180°）。',
+    similarTip: '做几道对顶角与邻补角的判断题，练习快速识别角的位置关系。',
+    masteryStatus: '巩固中',
+    studentId: 's01',
+    date: '2026-06-13',
+    lastReviewDate: '2026-06-19',
+    frequency: 1,
+  },
+  {
+    id: 'q05',
+    subject: 'math',
+    knowledgePoint: '有理数运算',
+    sourceId: 'exam01',
+    stem: '计算：(-3) × 4 + (-2)² - 6 ÷ (-3) = ?',
+    myAnswer: '-6',
+    correctAnswer: '-6',
+    errorTag: '审题错误',
+    analysis: '(-3)×4 = -12，(-2)² = 4，6÷(-3) = -2，所以 -12 + 4 - (-2) = -12 + 4 + 2 = -6。虽然答案碰巧正确，但你的计算过程中把 (-2)² 写成了 -4，属于审题错误。',
+    aiExplanation: '你的中间步骤把 (-2)² 算成了 -4，说明你把 (-2)² 和 -2² 搞混了。(-2)² 表示 (-2)×(-2) = 4（括号内整体平方），而 -2² 表示 -(2×2) = -4（只平方 2，负号在外）。虽然最终结果碰巧对了，但过程有误，考试中很可能因此丢分。',
+    similarTip: '专门练习带括号的幂运算，区分 (-a)ⁿ 和 -aⁿ 的区别。',
+    masteryStatus: '已掌握',
+    studentId: 's01',
+    date: '2026-06-13',
+    lastReviewDate: '2026-06-20',
+    frequency: 1,
+  },
+  {
+    id: 'q06',
+    subject: 'english',
+    knowledgePoint: '一般过去时',
+    sourceId: 'exam02',
+    stem: '填空：She ___ (go) to the library yesterday afternoon.',
+    myAnswer: 'goes',
+    correctAnswer: 'went',
+    errorTag: '知识点混淆',
+    analysis: '"yesterday afternoon" 是过去时间标志词，应使用一般过去时。go 的过去式是 went（不规则变化），不能用一般现在时的 goes。',
+    aiExplanation: '你写了 goes（一般现在时第三人称单数形式），但句中有 "yesterday afternoon" 这个明确的过去时间状语，必须用一般过去时。go 是不规则动词，过去式是 went，不是 goed。建议你重新梳理常见不规则动词表，同时养成先看时间状语再确定时态的习惯。',
+    similarTip: '练习几道含有过去时间状语的句子填空，巩固"看时间词 → 定时态"的做题习惯。',
+    masteryStatus: '未掌握',
+    studentId: 's01',
+    date: '2026-06-16',
+    lastReviewDate: null,
+    frequency: 2,
+  },
+  {
+    id: 'q07',
+    subject: 'english',
+    knowledgePoint: '一般过去时',
+    sourceId: 'exam02',
+    stem: '选择题：They ___ a great time at the party last night.\nA. have  B. has  C. had  D. having',
+    myAnswer: 'A',
+    correctAnswer: 'C',
+    errorTag: '审题错误',
+    analysis: '"last night" 指过去的时间，应选过去式 had（C）。have 是原形/现在时，不符合过去时语境。',
+    aiExplanation: '你选了 A (have)，这是一般现在时的形式。题目中 "last night" 是典型的过去时间标志词，说明整个句子要用一般过去时。have 的过去式就是 had。做时态选择题时，第一步先圈出时间状语（yesterday / last week / ago 等），它直接决定了时态。',
+    similarTip: '多做时间状语与时态匹配的选择题，把常见时间标志词和对应时态整理成表格。',
+    masteryStatus: '巩固中',
+    studentId: 's01',
+    date: '2026-06-16',
+    lastReviewDate: '2026-06-19',
+    frequency: 1,
+  },
+  {
+    id: 'q08',
+    subject: 'english',
+    knowledgePoint: '介词搭配',
+    sourceId: 'exam02',
+    stem: '填空：He is good ___ playing basketball.',
+    myAnswer: 'in',
+    correctAnswer: 'at',
+    errorTag: '知识点混淆',
+    analysis: '"be good at" 是固定搭配，意为"擅长……"。"be good in" 虽然语法上可以理解，但不是标准搭配。',
+    aiExplanation: '这是一个固定搭配题。"be good at (doing) sth." 意思是"擅长某事"，介词必须用 at。你写的 in 虽然中文理解上说得通，但英语里这个搭配是固定的。类似的还有 be interested in、be afraid of、be proud of 等。建议专门整理一张"形容词 + 介词"的常见搭配表。',
+    similarTip: '做一组介词搭配的专项练习，重点记忆 be good at / be interested in / be afraid of 等高频搭配。',
+    masteryStatus: '未掌握',
+    studentId: 's01',
+    date: '2026-06-16',
+    lastReviewDate: null,
+    frequency: 1,
+  },
+  {
+    id: 'q09',
+    subject: 'english',
+    knowledgePoint: '完形填空',
+    sourceId: 'homework02',
+    stem: '完形填空第 3 题：The old man walked ___ and finally reached the top of the mountain.\nA. quickly  B. slowly  C. happily  D. angrily',
+    myAnswer: 'A',
+    correctAnswer: 'B',
+    errorTag: '审题错误',
+    analysis: '根据上下文，"old man"（老人）爬山应该是缓慢的，且后文用 "finally"（终于）暗示过程艰难漫长，选 slowly 最合语境。',
+    aiExplanation: '你选了 quickly（快速地），但文中两个关键线索指向相反的意思：1) "old man" 说明行动不便；2) "finally" 表示经过很久才到达。这两个词搭配起来，slowly（缓慢地）才符合语境。做完形填空时要前后看，不要只看空格所在的那半句。',
+    similarTip: '练习完形填空时，先通读全文把握主旨，再回头逐空填写，注意上下文逻辑词的暗示作用。',
+    masteryStatus: '巩固中',
+    studentId: 's01',
+    date: '2026-06-17',
+    lastReviewDate: '2026-06-20',
+    frequency: 1,
+  },
+  {
+    id: 'q10',
+    subject: 'english',
+    knowledgePoint: '词义辨析',
+    sourceId: 'homework02',
+    stem: '选词填空：Can you ___ me your pen? I forgot to bring mine.\nA. borrow  B. lend  C. keep  D. take',
+    myAnswer: 'A',
+    correctAnswer: 'B',
+    errorTag: '概念不清',
+    analysis: 'borrow 意为"借入"（向别人借），lend 意为"借出"（把东西借给别人）。这里是请求对方把笔"借给"我，用 lend（lend sb. sth.）。',
+    aiExplanation: '你选了 borrow，但 borrow 的意思是"我向你借"，主语是借入方；而 lend 的意思是"你借给我"，主语是借出方。这句话的主语是 you（对方），所以应该是 you lend me，而不是 you borrow me。记忆口诀：borrow from（从别人那借来），lend to（借给别人）。',
+    similarTip: '做几道 borrow/lend、bring/take 等易混词辨析题，注意"方向感"：谁给谁、从哪到哪。',
+    masteryStatus: '未掌握',
+    studentId: 's01',
+    date: '2026-06-17',
+    lastReviewDate: null,
+    frequency: 1,
+  },
+  {
+    id: 'q11',
+    subject: 'math',
+    knowledgePoint: '分数加减法',
+    sourceId: 'homework01',
+    stem: '计算：7/8 - 1/3 = ?',
+    myAnswer: '6/5',
+    correctAnswer: '13/24',
+    errorTag: '概念不清',
+    analysis: '通分：7/8 = 21/24，1/3 = 8/24，相减得 21/24 - 8/24 = 13/24。不能直接用分子相减分母相减。',
+    aiExplanation: '你又犯了和第 1 题类似的错误——直接用分子减分子（7-1=6）、分母减分母（8-3=5），得到 6/5。分数加减法必须先通分！7/8 和 1/3 的最小公分母是 24，化成 21/24 和 8/24 再相减。这个错误说明通分的概念还没有内化，需要重点巩固。',
+    similarTip: '集中练习 5 道不同分母的分数加减法，每道题都写出通分步骤。',
+    masteryStatus: '未掌握',
+    studentId: 's01',
+    date: '2026-06-10',
+    lastReviewDate: null,
+    frequency: 2,
+  },
+  {
+    id: 'q12',
+    subject: 'english',
+    knowledgePoint: '现在完成时',
+    sourceId: 'exam02',
+    stem: '选择题：I ___ this book twice already.\nA. read  B. reads  C. have read  D. am reading',
+    myAnswer: 'A',
+    correctAnswer: 'C',
+    errorTag: '知识点混淆',
+    analysis: '"already" 和 "twice" 是现在完成时的标志词，表示到目前为止的经历。应该用 have read（现在完成时）。',
+    aiExplanation: '你选了 A (read)，这里 read 可以是一般现在时也可以是过去时（过去式也是 read），但都不对。句中 "already" 和 "twice" 说明这是一个"到现在为止的经历/结果"，这正是现在完成时的典型用法。结构是 have/has + 过去分词，所以选 have read。建议你整理三类时态的标志词：一般过去时 vs 现在完成时 vs 一般现在时。',
+    similarTip: '做现在完成时 vs 一般过去时的对比练习，重点区分 already/yet/ever/never/just 等标志词。',
+    masteryStatus: '巩固中',
+    studentId: 's01',
+    date: '2026-06-16',
+    lastReviewDate: '2026-06-19',
+    frequency: 1,
+  },
+];
+
+// ---- 其他学生的错题（老师端聚合用） ----
+const OTHER_STUDENTS_ERRORS = [
+  { studentId: 's02', questionId: 'q01', errorTag: '概念不清' },
+  { studentId: 's02', questionId: 'q03', errorTag: '计算失误' },
+  { studentId: 's02', questionId: 'q06', errorTag: '知识点混淆' },
+  { studentId: 's02', questionId: 'q08', errorTag: '知识点混淆' },
+  { studentId: 's03', questionId: 'q01', errorTag: '概念不清' },
+  { studentId: 's03', questionId: 'q04', errorTag: '概念不清' },
+  { studentId: 's03', questionId: 'q06', errorTag: '审题错误' },
+  { studentId: 's03', questionId: 'q07', errorTag: '审题错误' },
+  { studentId: 's03', questionId: 'q11', errorTag: '概念不清' },
+  { studentId: 's04', questionId: 'q03', errorTag: '计算失误' },
+  { studentId: 's04', questionId: 'q06', errorTag: '知识点混淆' },
+  { studentId: 's04', questionId: 'q10', errorTag: '概念不清' },
+  { studentId: 's05', questionId: 'q01', errorTag: '概念不清' },
+  { studentId: 's05', questionId: 'q06', errorTag: '知识点混淆' },
+  { studentId: 's05', questionId: 'q07', errorTag: '审题错误' },
+  { studentId: 's05', questionId: 'q08', errorTag: '知识点混淆' },
+  { studentId: 's05', questionId: 'q09', errorTag: '审题错误' },
+  { studentId: 's05', questionId: 'q11', errorTag: '概念不清' },
+  { studentId: 's05', questionId: 'q12', errorTag: '知识点混淆' },
+];
+
+// ---- 再练同类题模板（按知识点） ----
+const PRACTICE_TEMPLATES = {
+  '分数加减法': [
+    { stem: '计算：1/4 + 2/5 = ?', type: 'fill', correctAnswer: '13/20', explanation: '通分：1/4 = 5/20, 2/5 = 8/20, 相加得 13/20。' },
+    { stem: '计算：5/6 - 1/4 = ?', type: 'fill', correctAnswer: '7/12', explanation: '通分：5/6 = 10/12, 1/4 = 3/12, 相减得 7/12。' },
+    { stem: '下列哪个是 1/3 + 1/6 的正确结果？\nA. 2/9  B. 1/2  C. 2/6  D. 1/3', type: 'choice', options: ['A','B','C','D'], correctAnswer: 'B', explanation: '通分得 2/6 + 1/6 = 3/6 = 1/2。' },
+  ],
+  '分数乘除法': [
+    { stem: '计算：3/4 × 2/5 = ?', type: 'fill', correctAnswer: '3/10', explanation: '分子相乘 3×2=6，分母相乘 4×5=20，化简 6/20=3/10。' },
+    { stem: '计算：7/8 ÷ 1/4 = ?', type: 'fill', correctAnswer: '7/2', explanation: '除以 1/4 等于乘以 4/1，7/8 × 4 = 28/8 = 7/2。' },
+    { stem: '2/3 ÷ 4/9 的结果是：\nA. 8/27  B. 3/2  C. 2/3  D. 6/4', type: 'choice', options: ['A','B','C','D'], correctAnswer: 'B', explanation: '2/3 × 9/4 = 18/12 = 3/2。' },
+  ],
+  '一元一次方程': [
+    { stem: '解方程：2x + 3 = 11', type: 'fill', correctAnswer: 'x = 4', explanation: '2x = 11 - 3 = 8，x = 4。' },
+    { stem: '解方程：5x - 2 = 3x + 6', type: 'fill', correctAnswer: 'x = 4', explanation: '5x - 3x = 6 + 2，2x = 8，x = 4。' },
+    { stem: '方程 4x + 1 = 2x + 9 的解是：\nA. x=3  B. x=4  C. x=5  D. x=2', type: 'choice', options: ['A','B','C','D'], correctAnswer: 'B', explanation: '4x-2x = 9-1，2x = 8，x = 4。' },
+  ],
+  '角度计算': [
+    { stem: '两条直线相交，一个角为 70°，它的对顶角是多少度？', type: 'fill', correctAnswer: '70°', explanation: '对顶角相等，所以对顶角也是 70°。' },
+    { stem: '∠A = 50°，与 ∠A 互补的角是多少度？', type: 'fill', correctAnswer: '130°', explanation: '互补：180° - 50° = 130°。' },
+    { stem: '两条直线相交形成的四个角中，已知一个角为 110°，其相邻角为：\nA. 110°  B. 70°  C. 90°  D. 180°', type: 'choice', options: ['A','B','C','D'], correctAnswer: 'B', explanation: '邻补角互补：180° - 110° = 70°。' },
+  ],
+  '有理数运算': [
+    { stem: '计算：(-5) + 3 × (-2) = ?', type: 'fill', correctAnswer: '-11', explanation: '先乘：3×(-2)=-6，再加：-5+(-6)=-11。' },
+    { stem: '计算：(-4)² - 3 = ?', type: 'fill', correctAnswer: '13', explanation: '(-4)²=16，16-3=13。' },
+    { stem: '(-1)²⁰²⁶ 的值是：\nA. 1  B. -1  C. 2026  D. 0', type: 'choice', options: ['A','B','C','D'], correctAnswer: 'A', explanation: '-1 的偶数次幂等于 1。' },
+  ],
+  '一般过去时': [
+    { stem: '填空：We ___ (visit) the museum last Sunday.', type: 'fill', correctAnswer: 'visited', explanation: 'last Sunday 是过去时间，visit 的过去式是 visited。' },
+    { stem: '填空：He ___ (buy) a new bike two days ago.', type: 'fill', correctAnswer: 'bought', explanation: 'two days ago 提示过去时，buy 的过去式是 bought（不规则变化）。' },
+    { stem: 'She ___ her homework before dinner yesterday.\nA. finishes  B. finished  C. has finished  D. is finishing', type: 'choice', options: ['A','B','C','D'], correctAnswer: 'B', explanation: 'yesterday 指过去，用一般过去时 finished。' },
+  ],
+  '现在完成时': [
+    { stem: '填空：They ___ (live) here since 2020.', type: 'fill', correctAnswer: 'have lived', explanation: 'since 2020 表示从过去到现在，用现在完成时 have lived。' },
+    { stem: '填空：She ___ (never/see) snow before.', type: 'fill', correctAnswer: 'has never seen', explanation: 'never + before 是现在完成时标志，see 的过去分词是 seen。' },
+    { stem: 'I ___ to Beijing three times.\nA. go  B. went  C. have been  D. am going', type: 'choice', options: ['A','B','C','D'], correctAnswer: 'C', explanation: '强调到目前为止的经历，用现在完成时 have been。' },
+  ],
+  '介词搭配': [
+    { stem: '填空：She is interested ___ music.', type: 'fill', correctAnswer: 'in', explanation: 'be interested in 是固定搭配，意为"对……感兴趣"。' },
+    { stem: '填空：Don\'t be afraid ___ making mistakes.', type: 'fill', correctAnswer: 'of', explanation: 'be afraid of 是固定搭配，意为"害怕……"。' },
+    { stem: 'He is proud ___ his daughter.\nA. at  B. of  C. in  D. for', type: 'choice', options: ['A','B','C','D'], correctAnswer: 'B', explanation: 'be proud of 是固定搭配，意为"为……感到自豪"。' },
+  ],
+  '完形填空': [
+    { stem: 'The children felt ___ when they heard the good news.\nA. sad  B. excited  C. tired  D. bored', type: 'choice', options: ['A','B','C','D'], correctAnswer: 'B', explanation: 'good news（好消息）对应的情绪是 excited（兴奋的）。' },
+    { stem: 'It was raining hard, ___ she still went to school.\nA. so  B. but  C. and  D. or', type: 'choice', options: ['A','B','C','D'], correctAnswer: 'B', explanation: '前后语义转折：下大雨"但"仍然去学校，用 but。' },
+    { stem: 'He ___ the door and walked into the room.\nA. opened  B. closed  C. locked  D. broke', type: 'choice', options: ['A','B','C','D'], correctAnswer: 'A', explanation: '先开门（opened）才能走进房间，逻辑通顺。' },
+  ],
+  '词义辨析': [
+    { stem: '选词填空：Please ___ me your book. I\'ll return it tomorrow.\nA. borrow  B. lend  C. give  D. buy', type: 'choice', options: ['A','B','C','D'], correctAnswer: 'B', explanation: 'lend sb. sth. 借给某人某物，borrow 是借入，方向不同。' },
+    { stem: '选词填空：Can I ___ your dictionary for a moment?\nA. borrow  B. lend  C. keep  D. return', type: 'choice', options: ['A','B','C','D'], correctAnswer: 'A', explanation: '主语"我"向"你"借入，用 borrow。' },
+    { stem: '填空：Please ___ your homework to the teacher. (bring / take)', type: 'fill', correctAnswer: 'take', explanation: 'take 表示"带去"（远离说话者），bring 表示"带来"（朝向说话者）。把作业带到老师那里用 take。' },
+  ],
+};
+
+// ---- 老师端聚合数据 ----
+const TEACHER_DATA = {
+  classAccuracy: 78.5,
+  recentTrend: [82, 79, 75, 78.5],
+  trendLabels: ['第1次作业', '第1次测验', '第2次作业', '第2次测验'],
+  pendingReviewCount: 6,
+
+  weakPoints: [
+    { point: '分数加减法',  subject: 'math',    errorCount: 4, errorRate: 80, suggestedAction: '建议下节课用 10 分钟专项复习通分步骤' },
+    { point: '一般过去时',  subject: 'english', errorCount: 4, errorRate: 80, suggestedAction: '建议布置一次不规则动词过去式默写' },
+    { point: '介词搭配',    subject: 'english', errorCount: 3, errorRate: 60, suggestedAction: '建议整理高频介词搭配表发给学生' },
+    { point: '一元一次方程', subject: 'math',    errorCount: 2, errorRate: 40, suggestedAction: '可在课后作业中增加 2 道移项练习' },
+    { point: '完形填空',    subject: 'english', errorCount: 2, errorRate: 40, suggestedAction: '建议讲解完形填空的上下文推断技巧' },
+  ],
+
+  focusStudents: [
+    { studentId: 's05', name: '刘子轩', errorCount: 7, accuracy: 62, trend: 'down', suggestion: '错题集中在英语，建议单独布置英语基础巩固题' },
+    { studentId: 's03', name: '王浩然', errorCount: 5, accuracy: 70, trend: 'flat', suggestion: '数学和英语均有薄弱项，建议安排一次面对面辅导' },
+    { studentId: 's02', name: '李思雨', errorCount: 4, accuracy: 74, trend: 'up',   suggestion: '正确率有回升趋势，继续保持当前复习节奏即可' },
+  ],
+
+  reviewSuggestions: [
+    { priority: 1, title: '分数加减法通分专项', content: '建议用 10 分钟讲解通分方法，结合错题 q01、q11，强调"先找公分母、再化分子"的步骤。可让学生板演一道通分过程。' },
+    { priority: 2, title: '一般过去时与时间状语', content: '从错题 q06、q07 出发，梳理"yesterday / last / ago → 一般过去时"规则。配合 5 道即时练习巩固，重点覆盖不规则动词。' },
+    { priority: 3, title: '介词搭配集中讲评', content: '整理 be good at / be interested in / be afraid of 等 8 组高频搭配，做成表格发给学生，课上花 5 分钟快速过一遍。' },
+    { priority: 4, title: '一元一次方程移项规则', content: '用错题 q03 举例，强调移项变号规则。建议让学生用红笔标注移项后的符号变化，养成检查习惯。' },
+  ],
+
+  nextActions: [
+    '建议下节数学课用 10 分钟讲评分数加减法通分步骤',
+    '建议给刘子轩、王浩然、李思雨 3 名学生布置英语基础巩固题',
+    '建议给全班发一次"一般过去时 vs 现在完成时"专项对比练习',
+    '建议本周五前完成介词搭配表的整理并发放',
+  ],
+};
+
+// ---- 当前学生的学习统计（学生端首页用） ----
+const STUDENT_STATS = {
+  currentStudentId: 's01',
+  currentStudentName: '张小明',
+  newThisWeek: 4,
+  pendingReview: 6,
+  mastered: 2,
+  streakDays: 3,
+  lastExamName: '一般过去时专项测验',
+  lastExamAccuracy: 67,
+  lastExamTotal: 6,
+  lastExamCorrect: 4,
+  todayReviewTasks: [
+    { questionId: 'q01', knowledgePoint: '分数加减法', subject: 'math' },
+    { questionId: 'q03', knowledgePoint: '一元一次方程', subject: 'math' },
+    { questionId: 'q06', knowledgePoint: '一般过去时', subject: 'english' },
+  ],
+};
+
+
+// ---- 第一层/第二层扩展字段（入库原因、诊断依据、修复动作、标记） ----
+const QUESTION_EXTRA = {
+  q01: { ingestReason: '作业批改自动入库', isCommonError: true,  teacherMarked: true,  diagnosisBasis: '分子分母直接相加，未通分', repairActions: ['先看讲解','做3道同类题'], reviewReason: '高频错题，已连续出错 2 次' },
+  q02: { ingestReason: '作业批改自动入库', isCommonError: false, teacherMarked: false, diagnosisBasis: '除法运算方向搞反',         repairActions: ['做3道同类题'],         reviewReason: '上次再练部分正确，建议巩固' },
+  q03: { ingestReason: '测验自动入库',     isCommonError: true,  teacherMarked: true,  diagnosisBasis: '移项后符号未变号',         repairActions: ['先看讲解','做3道同类题'], reviewReason: '高频错题，连续出错 2 次' },
+  q04: { ingestReason: '测验自动入库',     isCommonError: true,  teacherMarked: false, diagnosisBasis: '对顶角与邻补角概念混淆',   repairActions: ['先看讲解'],             reviewReason: '上次再练部分正确' },
+  q05: { ingestReason: '测验自动入库',     isCommonError: false, teacherMarked: false, diagnosisBasis: '(-a)² 与 -a² 混淆',       repairActions: ['做3道同类题'],         reviewReason: null },
+  q06: { ingestReason: '测验自动入库',     isCommonError: true,  teacherMarked: true,  diagnosisBasis: '忽略时间状语 yesterday',   repairActions: ['先看讲解','做3道同类题','回看课堂讲解片段'], reviewReason: '高频错题，连续 2 次出错' },
+  q07: { ingestReason: '测验自动入库',     isCommonError: true,  teacherMarked: false, diagnosisBasis: '未识别 last night 时态信号', repairActions: ['做3道同类题'],         reviewReason: '上次再练部分正确' },
+  q08: { ingestReason: '测验自动入库',     isCommonError: true,  teacherMarked: false, diagnosisBasis: '固定搭配记忆不牢',         repairActions: ['整理搭配表','做3道同类题'], reviewReason: '尚未复习' },
+  q09: { ingestReason: '作业批改自动入库', isCommonError: false, teacherMarked: false, diagnosisBasis: '未结合上下文推断',         repairActions: ['做3道同类题'],         reviewReason: '上次再练部分正确' },
+  q10: { ingestReason: '作业批改自动入库', isCommonError: false, teacherMarked: false, diagnosisBasis: 'borrow/lend 方向混淆',     repairActions: ['先看讲解','做3道同类题'], reviewReason: '尚未复习' },
+  q11: { ingestReason: '作业批改自动入库', isCommonError: true,  teacherMarked: true,  diagnosisBasis: '与 q01 同类错误，通分概念未掌握', repairActions: ['先看讲解','做3道同类题'], reviewReason: '高频错题，连续 2 次出错' },
+  q12: { ingestReason: '测验自动入库',     isCommonError: false, teacherMarked: false, diagnosisBasis: '现在完成时标志词未识别',   repairActions: ['做3道同类题'],         reviewReason: '上次再练部分正确' },
+};
+WRONG_QUESTIONS.forEach(q => { Object.assign(q, QUESTION_EXTRA[q.id] || {}); });
+
+// ---- 推荐复习任务增加推荐原因 ----
+STUDENT_STATS.todayReviewTasks[0].reviewReason = '高频错题，已连续出错 2 次，优先复习';
+STUDENT_STATS.todayReviewTasks[1].reviewReason = '高频错题，连续出错 2 次';
+STUDENT_STATS.todayReviewTasks[2].reviewReason = '高频错题，连续 2 次出错，多名同学共错';
+
+
+/* ================================================================
+   工具函数
+   ================================================================ */
+function getSource(sourceId) {
+  return SOURCES.find(s => s.id === sourceId) || {};
+}
+
+function getStudent(studentId) {
+  return STUDENTS.find(s => s.id === studentId) || {};
+}
+
+function showToast(msg, type) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast' + (type ? ' ' + type : '');
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 2600);
+}
+
+
+/* ================================================================
+   角色切换
+   ================================================================ */
+let currentRole = 'student';
+
+function switchRole(role) {
+  currentRole = role;
+  document.querySelectorAll('.header-role-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.role === role);
+  });
+  document.getElementById('studentPanel').classList.toggle('active', role === 'student');
+  document.getElementById('teacherPanel').classList.toggle('active', role === 'teacher');
+  if (role === 'student') {
+    switchStuPage('stuOverview');
+    renderOverview();
+    renderQuestionList();
+  }
+  window.scrollTo(0, 0);
+}
+
+
+/* ================================================================
+   顶部班级 & 科目切换
+   ================================================================ */
+function switchHeaderClass(val) {
+  const names = { c01: '七年级2班', c02: '七年级1班', c03: '七年级3班', c04: '八年级1班' };
+  showToast('已切换到 ' + (names[val] || val) + '（Demo 数据不变）');
+}
+
+let headerSubject = '';
+
+function switchHeaderSubject(val) {
+  headerSubject = val;
+  document.getElementById('filterSubject').value = val;
+  renderOverview();
+  renderQuestionList();
+  renderTchOverview();
+  renderTchCommon();
+  renderTchPublish();
+  showToast(val ? (val === 'math' ? '已切换到数学' : '已切换到英语') : '显示全部科目');
+}
+
+function getSubjectFilteredQuestions() {
+  if (!headerSubject) return WRONG_QUESTIONS;
+  return WRONG_QUESTIONS.filter(q => q.subject === headerSubject);
+}
+
+function getSubjectFilteredOtherErrors() {
+  if (!headerSubject) return OTHER_STUDENTS_ERRORS;
+  return OTHER_STUDENTS_ERRORS.filter(e => {
+    const q = WRONG_QUESTIONS.find(qq => qq.id === e.questionId);
+    return q && q.subject === headerSubject;
+  });
+}
+
+
+/* ================================================================
+   学生端二级页面切换
+   ================================================================ */
+let currentStuPage = 'stuOverview';
+
+function switchStuPage(pageId) {
+  currentStuPage = pageId;
+  document.querySelectorAll('.stu-nav-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.page === pageId);
+  });
+  document.querySelectorAll('#studentPanel .stu-page').forEach(p => {
+    p.classList.toggle('active', p.id === pageId);
+  });
+  if (pageId === 'stuOverview') { renderOverview(); }
+  if (pageId === 'stuMistakes') { renderQuestionList(); }
+  window.scrollTo(0, 0);
+}
+
+
+/* ================================================================
+   学生端 — 学习概览渲染
+   ================================================================ */
+function renderOverview() {
+  const s = STUDENT_STATS;
+  const fq = getSubjectFilteredQuestions();
+  const newCount = fq.filter(q => q.date >= '2026-06-15').length;
+  const pendingCount = fq.filter(q => q.masteryStatus !== '已掌握').length;
+  const masteredCount = fq.filter(q => q.masteryStatus === '已掌握').length;
+
+  document.getElementById('statNew').textContent = newCount;
+  document.getElementById('statPending').textContent = pendingCount;
+  document.getElementById('statMastered').textContent = masteredCount;
+  document.getElementById('statStreak').textContent = s.streakDays + ' 天';
+
+  const filteredTasks = s.todayReviewTasks.filter(t => !headerSubject || t.subject === headerSubject);
+  document.getElementById('reviewTaskCount').textContent = filteredTasks.length + ' 道待复习';
+
+  const lastExam = headerSubject
+    ? SOURCES.filter(src => src.type === '测验' && src.subject === headerSubject).pop()
+    : SOURCES.filter(src => src.type === '测验').pop();
+  if (lastExam) {
+    const examQs = fq.filter(q => q.sourceId === lastExam.id);
+    const examTotal = Math.max(examQs.length + 2, 5);
+    const examCorrect = examTotal - examQs.length;
+    const examAcc = Math.round(examCorrect / examTotal * 100);
+    document.getElementById('lastExamName').textContent = lastExam.name;
+    document.getElementById('lastExamAcc').textContent = examAcc + '%';
+    const classAvg = TEACHER_DATA.classAccuracy;
+    const diff = examAcc - classAvg;
+    const diffText = diff >= 0 ? '高于班级均值 ' + Math.abs(diff).toFixed(0) + '%' : '低于班级均值 ' + Math.abs(diff).toFixed(0) + '%';
+    const diffColor = diff >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+    document.getElementById('lastExamCorrectLabel').textContent = '答对 ' + examCorrect + ' / ' + examTotal + ' 题';
+    document.getElementById('lastExamTotalLabel').innerHTML = '<span style="color:' + diffColor + '">' + diffText + '</span>';
+    setTimeout(() => { document.getElementById('lastExamBar').style.width = examAcc + '%'; }, 100);
+  }
+
+  document.getElementById('ctaSub').textContent =
+    '系统根据错题库自动生成今日复习任务，共 ' + filteredTasks.length + ' 道';
+  document.getElementById('ctaLogic').textContent =
+    '推荐逻辑：优先高频错题 + 未掌握题 + 老师重点标记题，间隔 1~2 天复习效果最佳';
+  document.getElementById('overviewDataSource').textContent =
+    '数据来源：近 2 周作业与测验 · 更新时间：今日';
+
+  const taskHtml = filteredTasks.map(t => {
+    const subj = SUBJECTS.find(sub => sub.id === t.subject);
+    return '<div class="review-task-item">' +
+      '<div class="review-task-left">' +
+        '<div class="review-task-subject">' + (subj ? subj.icon : '') + '</div>' +
+        '<div><span class="review-task-kp">' + t.knowledgePoint + '</span>' +
+        (t.reviewReason ? '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:2px;">' + t.reviewReason + '</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<button class="btn-sm" onclick="viewDetail(\'' + t.questionId + '\')">去复习</button>' +
+    '</div>';
+  }).join('');
+  document.getElementById('reviewTaskList').innerHTML = taskHtml;
+}
+
+
+/* ================================================================
+   学生端 — 错题本列表 筛选 & 渲染
+   ================================================================ */
+function populateFilterOptions() {
+  const kpSelect = document.getElementById('filterKP');
+  const allKPs = [...new Set(WRONG_QUESTIONS.map(q => q.knowledgePoint))];
+  allKPs.forEach(kp => {
+    const opt = document.createElement('option');
+    opt.value = kp;
+    opt.textContent = kp;
+    kpSelect.appendChild(opt);
+  });
+
+  const srcSelect = document.getElementById('filterSource');
+  SOURCES.forEach(src => {
+    const opt = document.createElement('option');
+    opt.value = src.id;
+    opt.textContent = src.type + '：' + src.name;
+    srcSelect.appendChild(opt);
+  });
+}
+
+function getFilteredQuestions() {
+  const subj = document.getElementById('filterSubject').value || headerSubject;
+  const kp   = document.getElementById('filterKP').value;
+  const mast = document.getElementById('filterMastery').value;
+  const src  = document.getElementById('filterSource').value;
+  const etag = document.getElementById('filterErrorTag').value;
+  const mark = document.getElementById('filterMarked').value;
+
+  return WRONG_QUESTIONS.filter(q => {
+    if (subj && q.subject !== subj) return false;
+    if (kp && q.knowledgePoint !== kp) return false;
+    if (mast && q.masteryStatus !== mast) return false;
+    if (src && q.sourceId !== src) return false;
+    if (etag && q.errorTag !== etag) return false;
+    if (mark === 'marked' && !q.teacherMarked) return false;
+    if (mark === 'common' && !q.isCommonError) return false;
+    return true;
+  });
+}
+
+function renderQuestionList() {
+  const filtered = getFilteredQuestions();
+  const countEl = document.getElementById('filterCount');
+  countEl.textContent = '共 ' + filtered.length + ' 道错题';
+
+  if (filtered.length === 0) {
+    document.getElementById('questionList').innerHTML =
+      '<div class="empty-hint">没有符合筛选条件的错题</div>';
+    return;
+  }
+
+  const html = filtered.map(q => {
+    const source = getSource(q.sourceId);
+    const stemPreview = q.stem.length > 60 ? q.stem.slice(0, 60) + '…' : q.stem;
+    return '<div class="q-card">' +
+      '<div class="q-card-top">' +
+        '<div class="q-card-stem">' + escHtml(stemPreview) + '</div>' +
+        '<span class="q-card-mastery mastery-' + q.masteryStatus + '">' + q.masteryStatus + '</span>' +
+      '</div>' +
+      '<div class="q-card-meta">' +
+        '<span class="q-meta-tag">' + (q.subject === 'math' ? '📐 数学' : '📝 英语') + '</span>' +
+        '<span class="q-meta-tag">' + q.knowledgePoint + '</span>' +
+        '<span class="q-meta-tag error-tag">' + q.errorTag + '</span>' +
+        '<span class="q-meta-tag source-tag">' + source.type + '：' + source.name + '</span>' +
+        (q.frequency >= 2 ? '<span class="q-meta-tag error-tag">高频错题</span>' : '') +
+        (q.teacherMarked ? '<span class="q-meta-tag" style="background:var(--color-secondary-bg);color:var(--color-secondary);">老师重点标记</span>' : '') +
+        (q.isCommonError ? '<span class="q-meta-tag" style="background:var(--color-warning-bg);color:var(--color-warning);">班级共性错题</span>' : '') +
+        '<span class="q-meta-tag">' + (q.ingestReason || '') + '</span>' +
+        '<span class="q-meta-tag">' + (q.lastReviewDate ? '上次复习：' + q.lastReviewDate : '尚未复习') + '</span>' +
+      '</div>' +
+      '<div class="q-card-answers">' +
+        '<div class="q-answer-item"><span class="q-answer-label">我的答案</span><span class="q-answer-val wrong">' + escHtml(q.myAnswer) + '</span></div>' +
+        '<div class="q-answer-item"><span class="q-answer-label">正确答案</span><span class="q-answer-val correct">' + escHtml(q.correctAnswer) + '</span></div>' +
+      '</div>' +
+      '<div class="q-card-actions">' +
+        '<button class="btn-sm" onclick="viewDetail(\'' + q.id + '\')">查看解析</button>' +
+        '<button class="btn-sm primary" onclick="showToast(\'已加入今日再练\', \'success\')">加入今日再练</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('questionList').innerHTML = html;
+}
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* ================================================================
+   学生端 — 错题详情
+   ================================================================ */
+let currentDetailQId = null;
+
+function viewDetail(qId) {
+  currentDetailQId = qId;
+  document.getElementById('navDetail').style.display = '';
+  document.getElementById('navPractice').style.display = 'none';
+  renderDetail(qId);
+  switchStuPage('stuDetail');
+}
+
+function renderDetail(qId) {
+  const q = WRONG_QUESTIONS.find(item => item.id === qId);
+  if (!q) { document.getElementById('detailContent').innerHTML = '<div class="empty-hint">未找到该错题</div>'; return; }
+  const source = getSource(q.sourceId);
+
+  const repairHtml = (q.repairActions || []).map(a =>
+    '<span class="q-meta-tag" style="background:var(--color-primary-bg);color:var(--color-primary);cursor:pointer;">' + a + '</span>'
+  ).join('');
+
+  document.getElementById('detailContent').innerHTML =
+    '<div class="detail-card">' +
+      /* 原题 */
+      '<div class="detail-section">' +
+        '<div class="detail-section-title">原题内容</div>' +
+        '<div class="detail-stem">' + escHtml(q.stem) + '</div>' +
+        '<div class="q-card-meta" style="margin-top:var(--space-3);margin-bottom:0">' +
+          '<span class="q-meta-tag">' + (q.subject === 'math' ? '📐 数学' : '📝 英语') + '</span>' +
+          '<span class="q-meta-tag">' + q.knowledgePoint + '</span>' +
+          '<span class="q-meta-tag source-tag">' + source.type + '：' + source.name + '</span>' +
+          '<span class="q-card-mastery mastery-' + q.masteryStatus + '">' + q.masteryStatus + '</span>' +
+          (q.teacherMarked ? '<span class="q-meta-tag" style="background:var(--color-secondary-bg);color:var(--color-secondary);">老师重点标记</span>' : '') +
+          (q.isCommonError ? '<span class="q-meta-tag" style="background:var(--color-warning-bg);color:var(--color-warning);">班级共性错题</span>' : '') +
+        '</div>' +
+      '</div>' +
+      /* 学习上下文 */
+      '<div class="detail-section">' +
+        '<div class="detail-section-title">学习上下文</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);font-size:var(--font-size-sm);">' +
+          '<div><span style="color:var(--color-text-muted);">来源课程：</span>' + (source.lesson || '—') + '</div>' +
+          '<div><span style="color:var(--color-text-muted);">来源类型：</span>' + source.type + '「' + source.name + '」</div>' +
+          '<div><span style="color:var(--color-text-muted);">入库时间：</span>' + q.date + '</div>' +
+          '<div><span style="color:var(--color-text-muted);">入库方式：</span>' + (q.ingestReason || '自动入库') + '</div>' +
+          '<div><span style="color:var(--color-text-muted);">老师讲评：</span>' + (source.hasReview ? '已讲评' : '未讲评') + '</div>' +
+          '<div><span style="color:var(--color-text-muted);">讲解回放：</span>' + (source.reviewClip ? '<span style="color:var(--color-primary);cursor:pointer;">' + source.reviewClip + '</span>' : '暂无') + '</div>' +
+        '</div>' +
+      '</div>' +
+      /* 答案对比 */
+      '<div class="detail-section">' +
+        '<div class="detail-section-title">答案对比</div>' +
+        '<div class="detail-answer-compare">' +
+          '<div class="detail-answer-box wrong-box">' +
+            '<div class="detail-answer-box-label">我的答案</div>' +
+            '<div class="detail-answer-box-val">' + escHtml(q.myAnswer) + '</div>' +
+          '</div>' +
+          '<div class="detail-answer-box correct-box">' +
+            '<div class="detail-answer-box-label">正确答案</div>' +
+            '<div class="detail-answer-box-val">' + escHtml(q.correctAnswer) + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      /* 错因分析：标签 + 诊断依据 */
+      '<div class="detail-section">' +
+        '<div class="detail-section-title">错因分析</div>' +
+        '<div class="q-card-meta" style="margin-bottom:var(--space-3)">' +
+          '<span class="q-meta-tag error-tag">' + q.errorTag + '</span>' +
+          (q.frequency >= 2 ? '<span class="q-meta-tag error-tag">高频错题 · 连续 ' + q.frequency + ' 次出错</span>' : '') +
+        '</div>' +
+        '<div class="detail-ai-text">' + escHtml(q.analysis) + '</div>' +
+        (q.diagnosisBasis ? '<div style="margin-top:var(--space-2);font-size:var(--font-size-xs);color:var(--color-text-muted);">诊断依据：' + q.diagnosisBasis + '</div>' : '') +
+      '</div>' +
+      /* 推荐修复动作 */
+      '<div class="detail-section">' +
+        '<div class="detail-section-title">推荐修复动作</div>' +
+        '<div class="q-card-meta" style="margin-bottom:0">' + repairHtml + '</div>' +
+      '</div>' +
+      /* 考察知识点 & 复习信息 */
+      '<div class="detail-section">' +
+        '<div class="detail-section-title">考察知识点</div>' +
+        '<div class="q-card-meta" style="margin-bottom:0">' +
+          '<span class="q-meta-tag">' + (q.subject === 'math' ? '📐 数学' : '📝 英语') + ' · ' + q.knowledgePoint + '</span>' +
+          '<span class="q-meta-tag">' + (q.lastReviewDate ? '上次复习：' + q.lastReviewDate : '尚未复习') + '</span>' +
+          '<span class="q-meta-tag">建议复习时机：间隔 1~2 天</span>' +
+        '</div>' +
+      '</div>' +
+      /* 智能讲解 */
+      '<div class="detail-section">' +
+        '<div class="detail-section-title">智能讲解 <span class="ai-badge">AI</span></div>' +
+        '<div class="detail-ai-text">' + escHtml(q.aiExplanation) + '</div>' +
+      '</div>' +
+      /* 举一反三提醒 */
+      '<div class="detail-section">' +
+        '<div class="detail-section-title">举一反三</div>' +
+        '<div class="detail-tip-box">' + escHtml(q.similarTip) + '</div>' +
+      '</div>' +
+      /* 数据来源 */
+      '<div class="detail-section" style="padding:var(--space-3) var(--space-5);border-bottom:none;">' +
+        '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);">数据来源：' + source.type + '「' + source.name + '」' + source.date + ' · ' + (q.ingestReason || '') + '</div>' +
+      '</div>' +
+      /* 操作按钮 */
+      '<div class="detail-actions">' +
+        '<button class="btn-md primary" onclick="startPractice(\'' + q.id + '\')">生成同类练习题</button>' +
+        '<button class="btn-md" onclick="showToast(\'已加入复习计划\', \'success\')">加入复习计划</button>' +
+      '</div>' +
+    '</div>';
+}
+
+
+/* ================================================================
+   学生端 — 再练页
+   ================================================================ */
+let practiceState = {
+  originQId: null,
+  questions: [],
+  answers: {},
+  submitted: false,
+};
+
+function startPractice(qId) {
+  const q = WRONG_QUESTIONS.find(item => item.id === qId);
+  if (!q) return;
+  const templates = PRACTICE_TEMPLATES[q.knowledgePoint];
+  if (!templates || templates.length === 0) { showToast('暂无同类练习题', 'warning'); return; }
+
+  practiceState = {
+    originQId: qId,
+    questions: templates.slice(0, 3),
+    answers: {},
+    submitted: false,
+  };
+
+  document.getElementById('navPractice').style.display = '';
+  renderPractice(q);
+  switchStuPage('stuPractice');
+}
+
+function renderPractice(originQ) {
+  const qs = practiceState.questions;
+  let html =
+    '<div class="practice-header">' +
+      '<div class="practice-title">同类题再练</div>' +
+      '<div class="practice-origin">知识点：' + escHtml(originQ.knowledgePoint) + ' · ' + (originQ.subject === 'math' ? '数学' : '英语') + ' · 难度：基础～同等</div>' +
+    '</div>' +
+    '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:var(--space-4);">' +
+      '变式题生成依据：基于原错题知识点「' + escHtml(originQ.knowledgePoint) + '」自动生成，难度：基础～同等。' +
+      '完成后结果将自动回流至掌握状态与老师学情面板。</div>';
+
+  qs.forEach((pq, idx) => {
+    html += '<div class="practice-item" id="practiceItem' + idx + '">' +
+      '<span class="practice-item-num">第 ' + (idx + 1) + ' 题</span>' +
+      '<div class="practice-item-stem">' + escHtml(pq.stem) + '</div>';
+
+    if (pq.type === 'choice') {
+      html += '<div class="practice-options">';
+      pq.options.forEach(opt => {
+        html += '<div class="practice-option" data-qi="' + idx + '" data-val="' + opt + '" onclick="selectOption(this,' + idx + ',\'' + opt + '\')">' +
+          '<div class="practice-option-radio"></div>' +
+          '<span>' + opt + '</span>' +
+        '</div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<input type="text" class="practice-fill-input" id="fillInput' + idx + '" placeholder="请输入答案" data-qi="' + idx + '">';
+    }
+
+    html += '<div class="practice-feedback" id="feedback' + idx + '"></div>' +
+      '</div>';
+  });
+
+  html += '<div class="practice-submit-bar">' +
+    '<button class="btn-md primary" id="practiceSubmitBtn" onclick="submitPractice()">提交答案</button>' +
+  '</div>' +
+  '<div class="practice-result-card" id="practiceResultCard"></div>';
+
+  document.getElementById('practiceContent').innerHTML = html;
+}
+
+function selectOption(el, qi, val) {
+  if (practiceState.submitted) return;
+  document.querySelectorAll('.practice-option[data-qi="' + qi + '"]').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  practiceState.answers[qi] = val;
+}
+
+function submitPractice() {
+  if (practiceState.submitted) return;
+  const qs = practiceState.questions;
+  let allAnswered = true;
+  qs.forEach((pq, idx) => {
+    if (pq.type === 'choice') {
+      if (!practiceState.answers[idx]) allAnswered = false;
+    } else {
+      const input = document.getElementById('fillInput' + idx);
+      const val = input ? input.value.trim() : '';
+      if (!val) allAnswered = false;
+      practiceState.answers[idx] = val;
+    }
+  });
+
+  if (!allAnswered) { showToast('请先完成所有题目', 'warning'); return; }
+
+  practiceState.submitted = true;
+  let correctCount = 0;
+
+  qs.forEach((pq, idx) => {
+    const userAns = practiceState.answers[idx];
+    const isCorrect = userAns.toLowerCase().replace(/\s/g, '') === pq.correctAnswer.toLowerCase().replace(/\s/g, '');
+    if (isCorrect) correctCount++;
+
+    const fb = document.getElementById('feedback' + idx);
+    if (isCorrect) {
+      fb.className = 'practice-feedback correct visible';
+      fb.textContent = '回答正确！' + pq.explanation;
+    } else {
+      fb.className = 'practice-feedback wrong visible';
+      fb.innerHTML = '<strong>回答错误</strong>，正确答案：' + escHtml(pq.correctAnswer) + '。' + escHtml(pq.explanation);
+    }
+
+    if (pq.type === 'choice') {
+      document.querySelectorAll('.practice-option[data-qi="' + idx + '"]').forEach(o => {
+        o.classList.add('disabled');
+        if (o.dataset.val === pq.correctAnswer) o.classList.add('correct-result');
+        else if (o.classList.contains('selected') && !isCorrect) o.classList.add('wrong-result');
+      });
+    } else {
+      const input = document.getElementById('fillInput' + idx);
+      input.disabled = true;
+      input.classList.add(isCorrect ? 'correct-result' : 'wrong-result');
+    }
+  });
+
+  // mastery update
+  const originQ = WRONG_QUESTIONS.find(q => q.id === practiceState.originQId);
+  let newMastery = '未掌握';
+  let masteryBadge = '';
+  if (correctCount === qs.length) {
+    newMastery = '已掌握';
+    masteryBadge = '<span class="practice-badge success">已掌握 +1</span>';
+  } else if (correctCount > 0) {
+    newMastery = '巩固中';
+    masteryBadge = '<span class="practice-badge warning">巩固中 — 部分正确</span>';
+  } else {
+    masteryBadge = '<span class="practice-badge warning">未掌握 — 需继续练习</span>';
+  }
+
+  if (originQ) {
+    originQ.masteryStatus = newMastery;
+    const today = new Date();
+    originQ.lastReviewDate = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+  }
+
+  // streak badge
+  const streakBadge = '<span class="practice-badge primary">连续复习 ' + STUDENT_STATS.streakDays + ' 天</span>';
+
+  // update overview stats
+  if (newMastery === '已掌握') {
+    STUDENT_STATS.mastered++;
+    STUDENT_STATS.pendingReview = Math.max(0, STUDENT_STATS.pendingReview - 1);
+  }
+
+  const resultCard = document.getElementById('practiceResultCard');
+  resultCard.className = 'practice-result-card visible';
+  resultCard.innerHTML =
+    '<div class="practice-result-score">' + correctCount + ' / ' + qs.length + '</div>' +
+    '<div class="practice-result-label">本次再练结果</div>' +
+    '<div class="practice-result-badges">' + masteryBadge + streakBadge + '</div>' +
+    '<div style="margin-top:var(--space-3);font-size:var(--font-size-xs);color:var(--color-text-muted);">系统已同步更新掌握状态为「' + newMastery + '」，并记录本次复习时间。结果已回流至老师班级学情面板。</div>' +
+    '<div style="margin-top:var(--space-5);display:flex;gap:var(--space-3);justify-content:center;">' +
+      '<button class="btn-md" onclick="switchStuPage(\'stuMistakes\')">返回错题本</button>' +
+      '<button class="btn-md primary" onclick="switchStuPage(\'stuOverview\')">返回概览</button>' +
+    '</div>';
+
+  document.getElementById('practiceSubmitBtn').style.display = 'none';
+
+  showToast('已提交，掌握状态已更新为"' + newMastery + '"', 'success');
+}
+
+
+/* ================================================================
+   老师端二级页面切换
+   ================================================================ */
+let currentTchPage = 'tchOverview';
+
+function switchTchPage(pageId) {
+  currentTchPage = pageId;
+  document.querySelectorAll('.tch-nav-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.page === pageId);
+  });
+  document.querySelectorAll('#teacherPanel .tch-page').forEach(p => {
+    p.classList.toggle('active', p.id === pageId);
+  });
+  window.scrollTo(0, 0);
+}
+
+
+/* ================================================================
+   老师端 — 班级学情概览
+   ================================================================ */
+function renderTchOverview() {
+  const d = TEACHER_DATA;
+  const filteredWP = headerSubject
+    ? d.weakPoints.filter(wp => wp.subject === headerSubject)
+    : d.weakPoints;
+  const pendingCount = getSubjectFilteredQuestions().length;
+
+  // stat cards
+  document.getElementById('tchStatCards').innerHTML =
+    '<div class="stat-card">' +
+      '<div class="stat-card-label">班级平均正确率</div>' +
+      '<div class="stat-card-value primary">' + d.classAccuracy + '%</div>' +
+      '<div class="stat-card-sub">最近 4 次作业/测验均值</div>' +
+    '</div>' +
+    '<div class="stat-card">' +
+      '<div class="stat-card-label">待讲评共性错题</div>' +
+      '<div class="stat-card-value danger">' + pendingCount + '</div>' +
+      '<div class="stat-card-sub">建议优先讲评 Top 2 知识点</div>' +
+    '</div>' +
+    '<div class="stat-card">' +
+      '<div class="stat-card-label">错误最集中测验</div>' +
+      '<div class="stat-card-value warning">' + d.trendLabels[2] + '</div>' +
+      '<div class="stat-card-sub">正确率 ' + d.recentTrend[2] + '%，低于均值</div>' +
+    '</div>';
+
+  // trend chart (SVG)
+  renderTrendChart();
+
+  // weak points
+  const weakHtml = filteredWP.map((wp, i) => {
+    return '<div class="weak-point-row">' +
+      '<div class="weak-rank ' + (i < 2 ? 'top' : 'normal') + '">' + (i + 1) + '</div>' +
+      '<div class="weak-info">' +
+        '<div class="weak-name">' + wp.point + '</div>' +
+        '<div class="weak-sub">' + (wp.subject === 'math' ? '数学' : '英语') + ' · 错误 ' + wp.errorCount + ' 人</div>' +
+      '</div>' +
+      '<div class="weak-bar-track"><div class="weak-bar-fill" style="width:' + wp.errorRate + '%"></div></div>' +
+      '<span style="font-size:var(--font-size-xs);color:var(--color-danger);width:36px;text-align:right;">' + wp.errorRate + '%</span>' +
+    '</div>';
+  }).join('');
+  document.getElementById('tchWeakList').innerHTML = weakHtml;
+
+  // focus students
+  const focusHtml = d.focusStudents.map(fs => {
+    const trendMap = { up: '↑ 回升', down: '↓ 下降', flat: '→ 持平' };
+    const trendCls = 'trend-' + fs.trend;
+    return '<div class="focus-student-row" style="flex-wrap:wrap;">' +
+      '<div class="focus-avatar">' + fs.name.charAt(0) + '</div>' +
+      '<div class="focus-info">' +
+        '<div class="focus-name">' + fs.name + '</div>' +
+        '<div class="focus-detail">错题 ' + fs.errorCount + ' 道 · 正确率 ' + fs.accuracy + '%</div>' +
+      '</div>' +
+      '<span class="trend-tag ' + trendCls + '">' + trendMap[fs.trend] + '</span>' +
+      '<div style="width:100%;display:flex;gap:var(--space-2);margin-top:var(--space-2);padding-left:calc(32px + var(--space-3));">' +
+        '<button class="btn-sm" onclick="showToast(\'查看 ' + fs.name + ' 的错题列表\')">查看错题</button>' +
+        '<button class="btn-sm primary" onclick="showToast(\'已为 ' + fs.name + ' 布置基础巩固再练\', \'success\')">布置基础再练</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  document.getElementById('tchFocusList').innerHTML = focusHtml;
+
+  // AI action list
+  const actionBtns = [
+    { label: '去讲评', action: "switchTchPage('tchCommon')" },
+    { label: '去布置', action: "switchTchPage('tchPublish')" },
+    { label: '去布置', action: "switchTchPage('tchPublish')" },
+    { label: '标记必会', action: "showToast('已标记为重点必会知识点', 'success')" },
+  ];
+  const actionHtml = d.nextActions.map((a, i) => {
+    const btn = actionBtns[i] || { label: '查看', action: '' };
+    return '<div class="tch-action-item">' +
+      '<div class="tch-action-bullet">' + (i + 1) + '</div>' +
+      '<span style="flex:1;">' + a + '</span>' +
+      '<button class="btn-sm" style="flex-shrink:0;" onclick="' + btn.action + '">' + btn.label + '</button>' +
+    '</div>';
+  }).join('');
+  document.getElementById('tchActionList').innerHTML = actionHtml;
+}
+
+let weakViewMode = 'kp';
+function switchWeakView(mode) {
+  weakViewMode = mode;
+  document.getElementById('weakByKP').classList.toggle('primary', mode === 'kp');
+  document.getElementById('weakByErr').classList.toggle('primary', mode === 'error');
+  if (mode === 'kp') {
+    document.getElementById('tchWeakTitle').textContent = '薄弱知识点 Top 5';
+    renderTchOverview();
+  } else {
+    document.getElementById('tchWeakTitle').textContent = '高频错因分布';
+    const errCounts = {};
+    getSubjectFilteredQuestions().forEach(q => { errCounts[q.errorTag] = (errCounts[q.errorTag] || 0) + 1; });
+    const sorted = Object.entries(errCounts).sort((a,b) => b[1] - a[1]);
+    const total = getSubjectFilteredQuestions().length;
+    const html = sorted.map((e, i) => {
+      const pct = Math.round(e[1] / total * 100);
+      return '<div class="weak-point-row">' +
+        '<div class="weak-rank ' + (i < 2 ? 'top' : 'normal') + '">' + (i+1) + '</div>' +
+        '<div class="weak-info"><div class="weak-name">' + e[0] + '</div><div class="weak-sub">' + e[1] + ' 道错题</div></div>' +
+        '<div class="weak-bar-track"><div class="weak-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '<span style="font-size:var(--font-size-xs);color:var(--color-danger);width:36px;text-align:right;">' + pct + '%</span>' +
+      '</div>';
+    }).join('');
+    document.getElementById('tchWeakList').innerHTML = html;
+  }
+}
+
+function renderTrendChart() {
+  const d = TEACHER_DATA;
+  const vals = d.recentTrend;
+  const labels = d.trendLabels;
+  const w = 400, h = 150, padL = 40, padR = 20, padT = 20, padB = 30;
+  const chartW = w - padL - padR;
+  const chartH = h - padT - padB;
+  const minV = 60, maxV = 100;
+
+  const points = vals.map((v, i) => {
+    const x = padL + (i / (vals.length - 1)) * chartW;
+    const y = padT + chartH - ((v - minV) / (maxV - minV)) * chartH;
+    return { x, y, v };
+  });
+
+  let svg = '<svg class="tch-chart-svg" viewBox="0 0 ' + w + ' ' + h + '">';
+
+  // grid lines
+  [60, 70, 80, 90, 100].forEach(gv => {
+    const gy = padT + chartH - ((gv - minV) / (maxV - minV)) * chartH;
+    svg += '<line class="tch-chart-grid" x1="' + padL + '" y1="' + gy + '" x2="' + (w - padR) + '" y2="' + gy + '"/>';
+    svg += '<text class="tch-chart-label" x="' + (padL - 6) + '" y="' + (gy + 4) + '" text-anchor="end">' + gv + '</text>';
+  });
+
+  // line
+  const linePts = points.map(p => p.x + ',' + p.y).join(' ');
+  svg += '<polyline class="tch-chart-line" points="' + linePts + '"/>';
+
+  // dots + values + labels
+  points.forEach((p, i) => {
+    svg += '<circle class="tch-chart-dot" cx="' + p.x + '" cy="' + p.y + '" r="4"/>';
+    svg += '<text class="tch-chart-val" x="' + p.x + '" y="' + (p.y - 10) + '" text-anchor="middle">' + p.v + '%</text>';
+    svg += '<text class="tch-chart-label" x="' + p.x + '" y="' + (h - 6) + '" text-anchor="middle">' + labels[i] + '</text>';
+  });
+
+  svg += '</svg>';
+  document.getElementById('tchChart').innerHTML = svg;
+}
+
+
+/* ================================================================
+   老师端 — 共性错题面板
+   ================================================================ */
+function renderTchCommon() {
+  const d = TEACHER_DATA;
+  const grouped = {};
+  d.reviewSuggestions.forEach(rs => { grouped[rs.title] = rs; });
+
+  // aggregate by knowledge point
+  const byKP = {};
+  const filteredQ = getSubjectFilteredQuestions();
+  const filteredOE = getSubjectFilteredOtherErrors();
+  filteredQ.forEach(q => {
+    if (!byKP[q.knowledgePoint]) byKP[q.knowledgePoint] = { kp: q.knowledgePoint, subject: q.subject, questions: [], errorStudents: new Set() };
+    byKP[q.knowledgePoint].questions.push(q);
+    byKP[q.knowledgePoint].errorStudents.add(q.studentId);
+  });
+  filteredOE.forEach(e => {
+    const q = WRONG_QUESTIONS.find(qq => qq.id === e.questionId);
+    if (q && byKP[q.knowledgePoint]) {
+      byKP[q.knowledgePoint].errorStudents.add(e.studentId);
+    }
+  });
+
+  // sort by review priority
+  const wpOrder = d.weakPoints.map(wp => wp.point);
+  const kpList = Object.values(byKP).sort((a, b) => {
+    const ai = wpOrder.indexOf(a.kp), bi = wpOrder.indexOf(b.kp);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+
+  let html = '';
+  if (kpList.length === 0) {
+    html = '<div class="empty-hint">当前科目下暂无共性错题</div>';
+    document.getElementById('tchCommonList').innerHTML = html;
+    return;
+  }
+  kpList.forEach((group, gi) => {
+    const wp = d.weakPoints.find(w => w.point === group.kp);
+    const errorRate = wp ? wp.errorRate : 0;
+    const reviewSug = d.reviewSuggestions.find(rs => rs.title.includes(group.kp));
+    const orderIdx = wpOrder.indexOf(group.kp);
+
+    html += '<div class="common-error-group' + (gi === 0 ? ' open' : '') + '" id="ceGroup' + gi + '">' +
+      '<div class="common-error-group-header" onclick="toggleCEGroup(' + gi + ')">' +
+        '<div class="common-error-group-title">' +
+          (orderIdx >= 0 ? '<span class="review-order-tag">讲评 #' + (orderIdx + 1) + '</span>' : '') +
+          (group.subject === 'math' ? '📐 ' : '📝 ') + group.kp +
+          '<span class="common-error-group-badge">' + group.errorStudents.size + ' 人出错</span>' +
+          (wp && wp.errorRate >= 60 ? '<span class="q-meta-tag error-tag" style="margin-left:var(--space-1);">高频共错</span>' : '') +
+        '</div>' +
+        '<span class="common-error-group-arrow">▶</span>' +
+      '</div>' +
+      '<div class="common-error-group-body">';
+
+    group.questions.forEach(q => {
+      const errStudents = 1 + OTHER_STUDENTS_ERRORS.filter(e => e.questionId === q.id).length;
+      const errRate = Math.round(errStudents / CLASS_INFO.totalStudents * 100);
+      const typicalErrors = OTHER_STUDENTS_ERRORS.filter(e => e.questionId === q.id).map(e => e.errorTag);
+      const typicalStr = [...new Set([q.errorTag, ...typicalErrors])].join('、');
+
+      html += '<div class="common-q-row" style="flex-wrap:wrap;">' +
+        '<div class="common-q-info">' +
+          '<div class="common-q-stem">' + escHtml(q.stem.length > 80 ? q.stem.slice(0, 80) + '…' : q.stem) + '</div>' +
+          '<div class="common-q-stats">' +
+            '<span>错误人数：' + errStudents + '/' + CLASS_INFO.totalStudents + '</span>' +
+            '<span>错误率：' + errRate + '%</span>' +
+          '</div>' +
+          '<div class="common-q-typical">典型错因分布：' + typicalStr + '</div>' +
+        '</div>' +
+        '<div class="common-q-actions">' +
+          '<button class="btn-sm" onclick="toggleAIReview(\'' + q.id + '\')">讲评建议</button>' +
+          '<button class="btn-sm" onclick="viewTeacherQDetail(\'' + q.id + '\')">查看题目</button>' +
+        '</div>' +
+        '<div class="ai-review-box" id="aiReview_' + q.id + '" style="width:100%;">' +
+          '<div class="ai-review-label">讲评建议</div>' +
+          (reviewSug ? reviewSug.content : (wp ? wp.suggestedAction : '暂无具体讲评建议')) +
+          '<div style="margin-top:var(--space-2);font-size:var(--font-size-xs);color:var(--color-text-muted);">建议依据：错误 ' + errStudents + ' 人，错误率 ' + errRate + '%' + (q.frequency >= 2 ? '，连续出现 ' + q.frequency + ' 次' : '') + '，来源：' + getSource(q.sourceId).type + '</div>' +
+        '</div>' +
+      '</div>';
+    });
+
+    html += '</div></div>';
+  });
+
+  document.getElementById('tchCommonList').innerHTML = html;
+}
+
+function toggleCEGroup(idx) {
+  document.getElementById('ceGroup' + idx).classList.toggle('open');
+}
+
+function toggleAIReview(qId) {
+  document.getElementById('aiReview_' + qId).classList.toggle('visible');
+}
+
+function viewTeacherQDetail(qId) {
+  const q = WRONG_QUESTIONS.find(item => item.id === qId);
+  if (!q) return;
+  switchRole('student');
+  viewDetail(qId);
+}
+
+
+/* ================================================================
+   老师端 — 讲评与再练发布
+   ================================================================ */
+let publishChecked = {};
+let publishTarget = 'all';
+
+function renderTchPublish() {
+  const d = TEACHER_DATA;
+  publishChecked = {};
+  const filteredWP = headerSubject
+    ? d.weakPoints.filter(wp => wp.subject === headerSubject)
+    : d.weakPoints;
+  const allQIds = [];
+  filteredWP.forEach(wp => {
+    getSubjectFilteredQuestions().filter(q => q.knowledgePoint === wp.point).forEach(q => {
+      if (!allQIds.includes(q.id)) allQIds.push(q.id);
+    });
+  });
+
+  let html = '';
+  allQIds.forEach(qId => {
+    const q = WRONG_QUESTIONS.find(item => item.id === qId);
+    if (!q) return;
+    const errStudents = 1 + OTHER_STUDENTS_ERRORS.filter(e => e.questionId === q.id).length;
+    const errRate = Math.round(errStudents / CLASS_INFO.totalStudents * 100);
+    publishChecked[qId] = true;
+
+    html += '<div class="publish-q-check checked" id="pubCheck_' + qId + '" onclick="togglePublishCheck(\'' + qId + '\')">' +
+      '<div class="publish-checkbox"></div>' +
+      '<span class="publish-q-label">' +
+        '<span class="q-meta-tag" style="margin-right:var(--space-2);">' + q.knowledgePoint + '</span>' +
+        escHtml(q.stem.length > 50 ? q.stem.slice(0, 50) + '…' : q.stem) +
+      '</span>' +
+      '<span class="publish-q-rate">错误率 ' + errRate + '%</span>' +
+    '</div>';
+  });
+  document.getElementById('publishCheckList').innerHTML = html;
+
+  // student picker
+  let pickerHtml = '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;">';
+  STUDENTS.forEach(s => {
+    pickerHtml += '<label style="display:flex;align-items:center;gap:var(--space-1);font-size:var(--font-size-sm);cursor:pointer;padding:var(--space-1) var(--space-2);border:1px solid var(--color-border);border-radius:var(--radius-full);transition:all var(--transition-fast);">' +
+      '<input type="checkbox" checked style="accent-color:var(--color-primary);">' + s.name +
+    '</label>';
+  });
+  pickerHtml += '</div>';
+  document.getElementById('publishStudentPicker').innerHTML = pickerHtml;
+  updatePublishPreview();
+}
+
+function togglePublishCheck(qId) {
+  publishChecked[qId] = !publishChecked[qId];
+  document.getElementById('pubCheck_' + qId).classList.toggle('checked', publishChecked[qId]);
+  updatePublishPreview();
+}
+
+function updatePublishPreview() {
+  const checked = Object.entries(publishChecked).filter(([_, v]) => v).map(([k]) => k);
+  const kps = [...new Set(checked.map(qId => {
+    const q = WRONG_QUESTIONS.find(item => item.id === qId);
+    return q ? q.knowledgePoint : '';
+  }).filter(Boolean))];
+  const studentCount = publishTarget === 'all' ? CLASS_INFO.totalStudents : document.querySelectorAll('#publishStudentPicker input:checked').length;
+  const el = document.getElementById('publishPreview');
+  if (checked.length === 0) {
+    el.textContent = '请选择至少一道错题';
+    return;
+  }
+  el.textContent = '预计覆盖：' + studentCount + ' 名学生 · ' + checked.length + ' 道题目 · ' + kps.length + ' 个知识点（' + kps.join('、') + '）';
+}
+
+function selectPublishTarget(target) {
+  publishTarget = target;
+  document.querySelectorAll('.publish-target-opt').forEach(o => {
+    o.classList.toggle('active', o.dataset.target === target);
+  });
+  document.getElementById('publishStudentPicker').style.display = target === 'part' ? 'block' : 'none';
+  updatePublishPreview();
+}
+
+function generateOutline() {
+  const checked = Object.entries(publishChecked).filter(([_, v]) => v).map(([k]) => k);
+  if (checked.length === 0) { showToast('请至少选择一道题目', 'warning'); return; }
+
+  const kps = [...new Set(checked.map(qId => {
+    const q = WRONG_QUESTIONS.find(item => item.id === qId);
+    return q ? q.knowledgePoint : '';
+  }).filter(Boolean))];
+
+  let outline = '讲评提纲（智能生成）\n\n';
+  kps.forEach((kp, i) => {
+    const sug = TEACHER_DATA.reviewSuggestions.find(rs => rs.title.includes(kp));
+    const wp = TEACHER_DATA.weakPoints.find(w => w.point === kp);
+    outline += (i + 1) + '. ' + kp + (wp ? '（错误率 ' + wp.errorRate + '%，' + wp.errorCount + ' 人出错）' : '') + '\n';
+    outline += '   讲评内容：' + (sug ? sug.content : '建议结合错题进行专项讲解。') + '\n';
+    outline += '   建议时长：约 8 分钟\n';
+    outline += '   讲完后布置：3 道同知识点变式题巩固\n\n';
+  });
+  outline += '建议总时长：约 ' + (kps.length * 8) + ' 分钟\n';
+  outline += '建议课堂流程：回顾错题 → 重点讲解 → 当堂小练 → 总结要点\n';
+  outline += '学生完成再练后，结果将自动回流至错题掌握状态与班级学情面板';
+
+  const el = document.getElementById('publishOutline');
+  el.className = 'publish-outline visible';
+  el.innerHTML = '<div class="publish-outline-content">' + escHtml(outline) + '</div>';
+  showToast('讲评提纲已生成', 'success');
+}
+
+function publishPractice() {
+  const checked = Object.entries(publishChecked).filter(([_, v]) => v).map(([k]) => k);
+  if (checked.length === 0) { showToast('请至少选择一道题目', 'warning'); return; }
+
+  const targetText = publishTarget === 'all' ? '全班 ' + CLASS_INFO.totalStudents + ' 名学生' : '部分学生';
+  const kps = [...new Set(checked.map(qId => {
+    const q = WRONG_QUESTIONS.find(item => item.id === qId);
+    return q ? q.knowledgePoint : '';
+  }).filter(Boolean))];
+
+  document.getElementById('modalTitle').textContent = '再练已成功发布';
+  document.getElementById('modalDesc').textContent =
+    '已向' + targetText + '布置 ' + checked.length + ' 道针对性再练题，' +
+    '覆盖知识点：' + kps.join('、') + '。学生完成后，掌握状态将自动更新并回流至班级学情面板。';
+  document.getElementById('publishModal').classList.add('visible');
+}
+
+function closeModal() {
+  document.getElementById('publishModal').classList.remove('visible');
+}
+
+
+/* ================================================================
+   初始化
+   ================================================================ */
+(function init() {
+  const now = new Date();
+  const dateStr = now.getFullYear() + '年' +
+    (now.getMonth() + 1).toString().padStart(2, '0') + '月' +
+    now.getDate().toString().padStart(2, '0') + '日 ' +
+    ['周日','周一','周二','周三','周四','周五','周六'][now.getDay()];
+  document.getElementById('headerDate').textContent = dateStr;
+
+  renderOverview();
+  populateFilterOptions();
+  renderQuestionList();
+  renderTchOverview();
+  renderTchCommon();
+  renderTchPublish();
+})();
+</script>
+</body>
+</html>
