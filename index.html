@@ -1171,19 +1171,134 @@ body {
   border-top: 1px solid var(--color-border-light);
 }
 
-.publish-outline {
-  padding: var(--space-4) var(--space-5);
-  display: none;
+/* ========== 讲评提纲结果卡片 ========== */
+.outline-summary {
+  background: var(--color-primary-bg);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
 }
-.publish-outline.visible { display: block; }
-.publish-outline-content {
-  background: var(--color-bg-page);
-  border-radius: var(--radius-md);
-  padding: var(--space-4) var(--space-5);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-loose);
+.outline-summary-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  margin-bottom: var(--space-3);
+}
+.outline-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+.outline-summary-item {
+  text-align: center;
+}
+.outline-summary-val {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
-  white-space: pre-line;
+}
+.outline-summary-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+.outline-summary-target {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-primary-border);
+}
+
+.outline-kp-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-3);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.outline-kp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-bg-page);
+  border-bottom: 1px solid var(--color-border-light);
+}
+.outline-kp-name {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+.outline-kp-duration {
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+.outline-kp-body {
+  padding: var(--space-4) var(--space-5);
+}
+.outline-kp-row {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+.outline-kp-row:last-child { padding-bottom: 0; }
+.outline-kp-label {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  min-width: 72px;
+  flex-shrink: 0;
+}
+.outline-kp-val {
+  color: var(--color-text-primary);
+}
+.outline-kp-assign {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-success);
+  font-weight: var(--font-weight-medium);
+}
+
+.outline-flow {
+  background: var(--color-bg-page);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-top: var(--space-4);
+}
+.outline-flow-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-3);
+}
+.outline-flow-steps {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.outline-flow-step {
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+.outline-flow-arrow {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
 }
 
 /* ========== 模态框（发布成功） ========== */
@@ -1385,7 +1500,7 @@ body {
 
     <!-- 页面：错题详情 -->
     <div class="stu-page" id="stuDetail">
-      <div class="detail-back" onclick="switchStuPage('stuMistakes')">← 返回错题本</div>
+      <div class="detail-back" onclick="switchStuPage('stuMistakes')">← 返回错题库</div>
       <div id="detailContent"></div>
     </div>
 
@@ -1483,10 +1598,13 @@ body {
 
       <div class="publish-section">
         <div class="publish-section-header">讲评提纲</div>
-        <div class="publish-outline" id="publishOutline"></div>
+        <div id="publishOutline" style="padding:var(--space-5);">
+          <div class="empty-hint" id="outlineEmpty" style="padding:var(--space-8) 0;">点击「生成课堂讲评方案」后，系统将根据所选共性错题输出结构化讲评方案</div>
+          <div id="outlineResult" style="display:none;"></div>
+        </div>
         <div class="publish-actions">
-          <button class="btn-md" onclick="generateOutline()">生成讲评提纲</button>
-          <button class="btn-md primary" onclick="publishPractice()">布置针对性再练</button>
+          <button class="btn-md" onclick="generateOutline()">生成课堂讲评方案</button>
+          <button class="btn-md primary" onclick="publishPractice()">发布讲评后再练</button>
         </div>
       </div>
     </div>
@@ -2436,7 +2554,7 @@ function submitPractice() {
     '<div class="practice-result-badges">' + masteryBadge + streakBadge + '</div>' +
     '<div style="margin-top:var(--space-3);font-size:var(--font-size-xs);color:var(--color-text-muted);">系统已同步更新掌握状态为「' + newMastery + '」，并记录本次复习时间。结果已回流至老师班级学情面板。</div>' +
     '<div style="margin-top:var(--space-5);display:flex;gap:var(--space-3);justify-content:center;">' +
-      '<button class="btn-md" onclick="switchStuPage(\'stuMistakes\')">返回错题本</button>' +
+      '<button class="btn-md" onclick="switchStuPage(\'stuMistakes\')">返回错题库</button>' +
       '<button class="btn-md primary" onclick="switchStuPage(\'stuOverview\')">返回概览</button>' +
     '</div>';
 
@@ -2684,7 +2802,7 @@ function renderTchCommon() {
         '</div>' +
         '<div class="common-q-actions">' +
           '<button class="btn-sm" onclick="toggleAIReview(\'' + q.id + '\')">讲评建议</button>' +
-          '<button class="btn-sm" onclick="viewTeacherQDetail(\'' + q.id + '\')">查看题目</button>' +
+          '<button class="btn-sm" onclick="viewTeacherQDetail(\'' + q.id + '\')">切换学生视角查看</button>' +
         '</div>' +
         '<div class="ai-review-box" id="aiReview_' + q.id + '" style="width:100%;">' +
           '<div class="ai-review-label">讲评建议</div>' +
@@ -2805,23 +2923,111 @@ function generateOutline() {
     return q ? q.knowledgePoint : '';
   }).filter(Boolean))];
 
-  let outline = '讲评提纲（智能生成）\n\n';
+  const studentCount = publishTarget === 'all' ? CLASS_INFO.totalStudents : document.querySelectorAll('#publishStudentPicker input:checked').length;
+  const totalMin = kps.length * 8;
+  const topKps = kps.slice(0, 2).join('、');
+
+  // --- 提纲总览 ---
+  const targetLabel = publishTarget === 'all' ? '全班 ' + studentCount + ' 名学生' : '部分学生 ' + studentCount + ' 人';
+  let html = '<div class="outline-summary">' +
+    '<div class="outline-summary-title">课堂讲评方案总览</div>' +
+    '<div class="outline-summary-grid">' +
+      '<div class="outline-summary-item"><div class="outline-summary-val">' + kps.length + '</div><div class="outline-summary-label">知识点</div></div>' +
+      '<div class="outline-summary-item"><div class="outline-summary-val">' + checked.length + '</div><div class="outline-summary-label">题目数</div></div>' +
+      '<div class="outline-summary-item"><div class="outline-summary-val">≈' + totalMin + ' 分钟</div><div class="outline-summary-label">预计总讲评时长</div></div>' +
+    '</div>' +
+    '<div class="outline-summary-target">' +
+      '发布对象：' + targetLabel + '　·　本次目标：优先纠正「' + topKps + '」' +
+    '</div>' +
+  '</div>';
+
+  // --- 每个知识点的讲评卡片 ---
   kps.forEach((kp, i) => {
     const sug = TEACHER_DATA.reviewSuggestions.find(rs => rs.title.includes(kp));
     const wp = TEACHER_DATA.weakPoints.find(w => w.point === kp);
-    outline += (i + 1) + '. ' + kp + (wp ? '（错误率 ' + wp.errorRate + '%，' + wp.errorCount + ' 人出错）' : '') + '\n';
-    outline += '   讲评内容：' + (sug ? sug.content : '建议结合错题进行专项讲解。') + '\n';
-    outline += '   建议时长：约 8 分钟\n';
-    outline += '   讲完后布置：3 道同知识点变式题巩固\n\n';
-  });
-  outline += '建议总时长：约 ' + (kps.length * 8) + ' 分钟\n';
-  outline += '建议课堂流程：回顾错题 → 重点讲解 → 当堂小练 → 总结要点\n';
-  outline += '学生完成再练后，结果将自动回流至错题掌握状态与班级学情面板';
+    const kpQs = checked.filter(qId => { const q = WRONG_QUESTIONS.find(item => item.id === qId); return q && q.knowledgePoint === kp; });
+    const errorTags = [...new Set(kpQs.map(qId => { const q = WRONG_QUESTIONS.find(item => item.id === qId); return q ? q.errorTag : ''; }).filter(Boolean))];
+    const priority = i === 0 ? '高' : (i === 1 ? '高' : '中');
+    const priorityColor = priority === '高' ? 'var(--color-danger)' : 'var(--color-warning)';
+    const audienceLabel = (wp && wp.errorRate >= 60) ? '全班讲评' : '重点关注学生';
+    const goalText = getKpGoal(kp);
 
-  const el = document.getElementById('publishOutline');
-  el.className = 'publish-outline visible';
-  el.innerHTML = '<div class="publish-outline-content">' + escHtml(outline) + '</div>';
+    html += '<div class="outline-kp-card">' +
+      '<div class="outline-kp-header">' +
+        '<div class="outline-kp-name">' +
+          '<span style="display:inline-block;padding:2px var(--space-2);border-radius:var(--radius-sm);font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold);color:' + priorityColor + ';background:' + (priority === '高' ? 'var(--color-danger-bg)' : 'var(--color-warning-bg)') + ';margin-right:var(--space-2);">优先级：' + priority + '</span>' +
+          (i + 1) + '. ' + kp +
+          (wp ? '　<span style="font-size:var(--font-size-xs);color:var(--color-danger);font-weight:var(--font-weight-normal);">错误率 ' + wp.errorRate + '% · ' + wp.errorCount + ' 人出错</span>' : '') +
+        '</div>' +
+        '<span class="outline-kp-duration">建议 8 分钟</span>' +
+      '</div>' +
+      '<div class="outline-kp-body">' +
+        '<div class="outline-kp-row"><span class="outline-kp-label">适用对象</span><span class="outline-kp-val">' + audienceLabel + '</span></div>' +
+        '<div class="outline-kp-row"><span class="outline-kp-label">讲评目标</span><span class="outline-kp-val">' + goalText + '</span></div>' +
+        '<div class="outline-kp-row"><span class="outline-kp-label">讲评重点</span><span class="outline-kp-val">' + (sug ? sug.content : '建议结合错题进行专项讲解') + '</span></div>' +
+        '<div class="outline-kp-row"><span class="outline-kp-label">典型错因</span><span class="outline-kp-val">' + errorTags.join('、') + '</span></div>' +
+        '<div class="outline-kp-row"><span class="outline-kp-label">建议讲法</span><span class="outline-kp-val">' + getTeachingMethod(kp) + '</span></div>' +
+        '<div class="outline-kp-assign" style="display:flex;flex-direction:column;gap:var(--space-2);background:var(--color-bg-page);border:1px solid var(--color-border-light);color:var(--color-text-primary);">' +
+          '<div style="font-weight:var(--font-weight-semibold);font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-bottom:var(--space-1);">讲完后布置（分层）</div>' +
+          '<div style="display:flex;align-items:center;gap:var(--space-2);"><span class="q-meta-tag" style="background:var(--color-success-bg);color:var(--color-success);">全班</span> 2 道基础变式题，巩固核心概念</div>' +
+          '<div style="display:flex;align-items:center;gap:var(--space-2);"><span class="q-meta-tag" style="background:var(--color-warning-bg);color:var(--color-warning);">易错学生</span> 2 道针对性巩固题，覆盖典型错因</div>' +
+          '<div style="display:flex;align-items:center;gap:var(--space-2);"><span class="q-meta-tag" style="background:var(--color-danger-bg);color:var(--color-danger);">重点关注</span> 1 道确认掌握题，老师可查看作答过程</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  });
+
+  // --- 课堂流程建议 ---
+  html += '<div class="outline-flow">' +
+    '<div class="outline-flow-title">建议课堂流程</div>' +
+    '<div class="outline-flow-steps">' +
+      '<span class="outline-flow-step">回顾共性错题</span>' +
+      '<span class="outline-flow-arrow">→</span>' +
+      '<span class="outline-flow-step">按知识点顺序讲评</span>' +
+      '<span class="outline-flow-arrow">→</span>' +
+      '<span class="outline-flow-step">当堂发布讲评后再练</span>' +
+      '<span class="outline-flow-arrow">→</span>' +
+      '<span class="outline-flow-step">结果自动回流学情面板</span>' +
+    '</div>' +
+  '</div>';
+
+  document.getElementById('outlineEmpty').style.display = 'none';
+  const resultEl = document.getElementById('outlineResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = html;
   showToast('讲评提纲已生成', 'success');
+}
+
+function getKpGoal(kp) {
+  const goals = {
+    '分数加减法': '让学生掌握通分步骤，能独立完成异分母加减运算',
+    '一般过去时': '学生能根据时间状语判断时态，正确使用不规则动词过去式',
+    '介词搭配': '记住 8 组高频介词搭配，选择题正确率提升至 80%+',
+    '一元一次方程': '移项时能自觉检查符号变化，计算正确率提升',
+    '完形填空': '养成先通读再填空的做题习惯，能利用上下文线索推断',
+    '分数乘除法': '熟练掌握"除变乘、倒过来"的运算规则',
+    '角度计算': '能快速区分对顶角与邻补角，判断正确率达 90%+',
+    '有理数运算': '区分 (-a)² 和 -a² 的含义差异',
+    '现在完成时': '区分现在完成时与一般过去时的标志词和用法',
+    '词义辨析': '掌握 borrow/lend 等易混词的方向性区别',
+  };
+  return goals[kp] || '纠正典型错误，确保学生掌握核心概念';
+}
+
+function getTeachingMethod(kp) {
+  const methods = {
+    '分数加减法': '用错题板演通分过程，让学生亲手操作最小公分母计算，再对比错误写法和正确写法',
+    '一般过去时': '从错题中的时间状语入手，先让学生圈出 yesterday/last/ago，再填时态，配合不规则动词表速记',
+    '介词搭配': '将 8 组高频搭配做成对比表格，课上快速问答过一遍，重点区分 at/in/of 的适用场景',
+    '一元一次方程': '用红蓝双色笔演示移项变号过程，移之前标蓝色，移之后标红色，强化符号变化的视觉记忆',
+    '完形填空': '先带学生通读全文画关键词，再回头逐空填写，演示"上下文推断"的完整思路',
+    '分数乘除法': '对比"乘法直接乘"和"除法变倒数"两种运算，用口诀"除变乘，倒过来"反复强化',
+    '角度计算': '画图标注对顶角和邻补角的位置关系，让学生用不同颜色标记，再做判断练习',
+    '有理数运算': '用括号颜色区分"整体平方"和"只平方数字"，连续做 5 道判断题巩固',
+    '现在完成时': '与一般过去时对比教学，列出两组标志词，让学生做分类练习',
+    '词义辨析': '用"方向箭头法"区分 borrow/lend、bring/take，画出"谁给谁"的示意图',
+  };
+  return methods[kp] || '结合典型错题，先讲解正确思路，再做即时练习巩固';
 }
 
 function publishPractice() {
@@ -2834,10 +3040,12 @@ function publishPractice() {
     return q ? q.knowledgePoint : '';
   }).filter(Boolean))];
 
-  document.getElementById('modalTitle').textContent = '再练已成功发布';
-  document.getElementById('modalDesc').textContent =
-    '已向' + targetText + '布置 ' + checked.length + ' 道针对性再练题，' +
-    '覆盖知识点：' + kps.join('、') + '。学生完成后，掌握状态将自动更新并回流至班级学情面板。';
+  document.getElementById('modalTitle').textContent = '讲评后再练已成功发布';
+  document.getElementById('modalDesc').innerHTML =
+    '已向' + targetText + '布置 ' + checked.length + ' 道分层再练题，' +
+    '覆盖知识点：' + escHtml(kps.join('、')) + '。<br><br>' +
+    '<span style="color:var(--color-text-primary);font-weight:var(--font-weight-medium);">学生完成后，结果将自动回流至：</span><br>' +
+    '· 学习错题库掌握状态<br>· 班级学情面板<br>· 下次讲评建议';
   document.getElementById('publishModal').classList.add('visible');
 }
 
