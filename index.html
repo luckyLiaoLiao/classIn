@@ -1376,7 +1376,6 @@ body {
       <option value="c04">八年级1班</option>
     </select>
     <select class="filter-select" id="headerSubjectSelect" onchange="switchHeaderSubject(this.value)" style="margin-left:var(--space-1);">
-      <option value="">全部科目</option>
       <option value="math">数学</option>
       <option value="english">英语</option>
     </select>
@@ -1464,7 +1463,6 @@ body {
     <div class="stu-page" id="stuMistakes">
       <div class="filter-bar">
         <select class="filter-select" id="filterSubject" onchange="renderQuestionList()">
-          <option value="">全部科目</option>
           <option value="math">数学</option>
           <option value="english">英语</option>
         </select>
@@ -2086,7 +2084,7 @@ function switchHeaderClass(val) {
   showToast('已切换到 ' + (names[val] || val) + '（Demo 数据不变）');
 }
 
-let headerSubject = '';
+let headerSubject = 'math';
 
 function switchHeaderSubject(val) {
   headerSubject = val;
@@ -2096,7 +2094,7 @@ function switchHeaderSubject(val) {
   renderTchOverview();
   renderTchCommon();
   renderTchPublish();
-  showToast(val ? (val === 'math' ? '已切换到数学' : '已切换到英语') : '显示全部科目');
+  showToast(val === 'math' ? '已切换到数学' : '已切换到英语');
 }
 
 function getSubjectFilteredQuestions() {
